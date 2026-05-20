@@ -83,6 +83,7 @@ function AttributeEditor({
   path,
   current,
   onChange,
+  onSelectAttribute,
 }: {
   title: string;
   icon: React.ReactNode;
@@ -91,6 +92,7 @@ function AttributeEditor({
   path: Path;
   current: CurrentRatings;
   onChange: (key: string, value: number) => void;
+  onSelectAttribute: (selection: { attr: Attribute; kind: AttrKind }) => void;
 }) {
   return (
     <Card className="attribute-card">
@@ -106,11 +108,14 @@ function AttributeEditor({
           const value = current[key] ?? 0;
 
           return (
-            <label className="attribute-row" key={key}>
+            <div className="attribute-row" key={key}>
               <span>
                 <strong>{clean(attr.name)}</strong>
                 <small>{attr.group}</small>
               </span>
+              <button className="attribute-info-button" type="button" aria-label={`Open details for ${clean(attr.name)}`} onClick={() => onSelectAttribute({ attr, kind })}>
+                <ChevronRight size={15} />
+              </button>
               <strong className="rating-value">{ratingPercent(value)}</strong>
               <Slider
                 min="0"
@@ -120,7 +125,7 @@ function AttributeEditor({
                 aria-label={`Current rating slider for ${clean(attr.name)}`}
                 onValueChange={([nextValue]) => onChange(key, clamp(nextValue || 0, 0, 10))}
               />
-            </label>
+            </div>
           );
         })}
       </CardContent>
@@ -402,6 +407,100 @@ function AttributeOverview({
   );
 }
 
+function CurrentAttributeOverview({
+  selection,
+  path,
+  current,
+  onBack,
+}: {
+  selection: { attr: Attribute; kind: AttrKind };
+  path: Path;
+  current: CurrentRatings;
+  onBack: () => void;
+}) {
+  const { attr, kind } = selection;
+  const now = currentValue(current, path, kind, attr);
+  const target = attr.final;
+  const gap = target - now;
+  const label = matrixLabel(kind);
+  const plan = attributeBuildPlan(attr, kind);
+
+  return (
+    <div className="attribute-overview">
+      <Button className="back-button" variant="outline" type="button" onClick={onBack}>
+        <ArrowLeft size={16} />
+        Back to ratings
+      </Button>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="detail-card-title">
+            {kind === "vehicle" ? <BriefcaseBusiness size={16} /> : <UserRound size={16} />}
+            {clean(attr.name)}
+          </CardTitle>
+          <CardDescription>
+            {label} rating · {attr.group}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="attribute-meter-grid">
+            <ScoreTile label="Current" value={ratingPercent(now)} />
+            <ScoreTile label="Target" value={ratingPercent(target)} />
+            <ScoreTile label="Gap" value={gapPercent(gap)} tone="dark" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="details-grid">
+        <Card>
+          <CardHeader>
+            <CardTitle className="detail-card-title">
+              <ListChecks size={16} />
+              Meaning
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>
+              This rating captures your current strength in <strong>{clean(attr.name)}</strong>. Move it up only when
+              you have real evidence, not just confidence.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="detail-card-title">
+              <Sparkles size={16} />
+              How to build it
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="action-list">
+              {plan.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="detail-card-title">
+              <BadgeCheck size={16} />
+              When to increase it
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>
+              Raise the slider when this attribute is showing up repeatedly in your actions, decisions, and outcomes.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; current: CurrentRatings }) {
   const businessRequired = avgRating(path.vehicleAttrs, step);
   const personRequired = avgRating(path.driverAttrs, step);
@@ -580,30 +679,42 @@ function CurrentRatingSheet({
   onChange: (key: string, value: number) => void;
   onClose: () => void;
 }) {
+  const [selectedAttribute, setSelectedAttribute] = useState<SelectedAttribute>(null);
+
+  useEffect(() => {
+    if (!open) setSelectedAttribute(null);
+  }, [open]);
+
   return (
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
       <SheetContent className="current-rating-sheet" onClose={onClose}>
         <div className="sheet-scroll">
-          <div className="rating-grid">
-            <AttributeEditor
-              title="Business rating"
-              icon={<BriefcaseBusiness size={17} />}
-              attrs={path.vehicleAttrs}
-              kind="vehicle"
-              path={path}
-              current={current}
-              onChange={onChange}
-            />
-            <AttributeEditor
-              title="Person rating"
-              icon={<UserRound size={17} />}
-              attrs={path.driverAttrs}
-              kind="driver"
-              path={path}
-              current={current}
-              onChange={onChange}
-            />
-          </div>
+          {selectedAttribute ? (
+            <CurrentAttributeOverview selection={selectedAttribute} path={path} current={current} onBack={() => setSelectedAttribute(null)} />
+          ) : (
+            <div className="rating-grid">
+              <AttributeEditor
+                title="Business rating"
+                icon={<BriefcaseBusiness size={17} />}
+                attrs={path.vehicleAttrs}
+                kind="vehicle"
+                path={path}
+                current={current}
+                onChange={onChange}
+                onSelectAttribute={setSelectedAttribute}
+              />
+              <AttributeEditor
+                title="Person rating"
+                icon={<UserRound size={17} />}
+                attrs={path.driverAttrs}
+                kind="driver"
+                path={path}
+                current={current}
+                onChange={onChange}
+                onSelectAttribute={setSelectedAttribute}
+              />
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
