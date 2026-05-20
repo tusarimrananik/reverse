@@ -108,7 +108,7 @@ function AttributeEditor({
                 <strong>{clean(attr.name)}</strong>
                 <small>{attr.group}</small>
               </span>
-              <strong className="rating-value">{value}/10</strong>
+              <strong className="rating-value">{ratingPercent(value)}</strong>
               <Slider
                 min="0"
                 max="10"
@@ -130,42 +130,46 @@ function readinessPercent(currentValue: number, requiredValue: number) {
   return clamp(Math.round((currentValue / requiredValue) * 100), 0, 100);
 }
 
+function ratingPercent(value: number) {
+  return `${clamp(value, 0, 10) * 10}%`;
+}
+
+function gapPercent(value: number) {
+  return `${clamp(Math.ceil(value), 0, 10) * 10}%`;
+}
+
 function StepStats({
   path,
   step,
   current,
-  format = "percent",
 }: {
   path: Path;
   step: Step;
   current: CurrentRatings;
-  format?: "rating" | "percent";
 }) {
   const vehicleRequired = avgRating(path.vehicleAttrs, step);
   const driverRequired = avgRating(path.driverAttrs, step);
   const vehicleCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
   const driverCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
-  const vehicleGap = Math.max(0, Math.ceil(vehicleRequired - vehicleCurrent));
-  const driverGap = Math.max(0, Math.ceil(driverRequired - driverCurrent));
   const businessPercent = readinessPercent(vehicleCurrent, vehicleRequired);
   const personPercent = readinessPercent(driverCurrent, driverRequired);
-  const gapPercent = clamp(100 - Math.round((businessPercent + personPercent) / 2), 0, 100);
+  const readinessGapPercent = clamp(100 - Math.round((businessPercent + personPercent) / 2), 0, 100);
 
   return (
     <div className="step-stats">
       <ScoreTile
         label="Business"
-        value={format === "percent" ? `${businessPercent}%` : `${vehicleCurrent}/${vehicleRequired}`}
+        value={`${businessPercent}%`}
         icon={<BriefcaseBusiness size={13} />}
       />
       <ScoreTile
         label="Person"
-        value={format === "percent" ? `${personPercent}%` : `${driverCurrent}/${driverRequired}`}
+        value={`${personPercent}%`}
         icon={<UserRound size={13} />}
       />
       <ScoreTile
         label="Gap"
-        value={format === "percent" ? `${gapPercent}%` : vehicleGap + driverGap}
+        value={`${readinessGapPercent}%`}
         icon={<TriangleAlert size={13} />}
         tone="dark"
       />
@@ -201,7 +205,7 @@ function StepButton({
         </span>
         <strong>{clean(step.title)}</strong>
       </span>
-      <StepStats path={path} step={step} current={current} format="percent" />
+      <StepStats path={path} step={step} current={current} />
       <ChevronRight className="timeline-arrow" size={18} />
     </button>
   );
@@ -240,12 +244,12 @@ function AttributeComparison({
                 <small>{attr.group}</small>
               </div>
               <div className="comparison-bars">
-                <span>Current {now}/10</span>
+                <span>Current {ratingPercent(now)}</span>
                 <Progress value={now} indicatorClassName="progress-current" />
-                <span>Target {required}/10</span>
+                <span>Target {ratingPercent(required)}</span>
                 <Progress value={required} />
               </div>
-              <span className={`gap-pill ${currentGapClass(gap)}`}>{Math.max(0, Math.ceil(gap))}</span>
+              <span className={`gap-pill ${currentGapClass(gap)}`}>{gapPercent(gap)}</span>
             </div>
           );
         })}
@@ -313,7 +317,7 @@ function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; c
           </CardHeader>
           <CardContent>
             <p>
-              Business <strong>{businessGap}</strong>. Person <strong>{personGap}</strong>. Start with the larger gap.
+              Business <strong>{gapPercent(businessGap)}</strong>. Person <strong>{gapPercent(personGap)}</strong>. Start with the larger gap.
             </p>
           </CardContent>
         </Card>
