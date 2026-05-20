@@ -7,19 +7,27 @@ export type SliderProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "typ
 };
 
 export const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
-  ({ className, value, min = 0, max = 100, step = 1, onValueChange, ...props }, ref) => (
-    <input
-      ref={ref}
-      className={cn("ui-slider", className)}
-      type="range"
-      min={min}
-      max={max}
-      step={step}
-      value={value[0] ?? 0}
-      onChange={(event) => onValueChange?.([Number(event.target.value)])}
-      {...props}
-    />
-  ),
+  ({ className, value, min = 0, max = 100, step = 1, onValueChange, style, ...props }, ref) => {
+    const current = value[0] ?? 0;
+    const minValue = Number(min);
+    const maxValue = Number(max);
+    const percent = maxValue === minValue ? 0 : ((current - minValue) / (maxValue - minValue)) * 100;
+
+    return (
+      <input
+        ref={ref}
+        className={cn("ui-slider", className)}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={current}
+        style={{ "--slider-percent": `${percent}%`, ...style } as React.CSSProperties}
+        onChange={(event) => onValueChange?.([Number(event.target.value)])}
+        {...props}
+      />
+    );
+  },
 );
 
 Slider.displayName = "Slider";

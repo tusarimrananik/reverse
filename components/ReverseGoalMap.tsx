@@ -6,9 +6,9 @@ import {
   BriefcaseBusiness,
   ChevronRight,
   CircleDollarSign,
+  Gauge,
   HeartHandshake,
   ListChecks,
-  SlidersHorizontal,
   Target,
   UserRound,
 } from "lucide-react";
@@ -59,6 +59,7 @@ function ScoreTile({ label, value, tone = "default" }: { label: string; value: s
 
 function AttributeEditor({
   title,
+  icon,
   attrs,
   kind,
   path,
@@ -66,6 +67,7 @@ function AttributeEditor({
   onChange,
 }: {
   title: string;
+  icon: React.ReactNode;
   attrs: Attribute[];
   kind: AttrKind;
   path: Path;
@@ -75,7 +77,10 @@ function AttributeEditor({
   return (
     <Card className="attribute-card">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="attribute-title">
+          {icon}
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent className="attribute-list">
         {attrs.map((attr) => {
@@ -285,8 +290,24 @@ function CurrentRatingSheet({
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
       <SheetContent className="current-rating-sheet" onClose={onClose}>
         <div className="sheet-scroll">
-          <AttributeEditor title="Business rating" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={onChange} />
-          <AttributeEditor title="Person rating" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={onChange} />
+          <AttributeEditor
+            title="Business rating"
+            icon={<BriefcaseBusiness size={17} />}
+            attrs={path.vehicleAttrs}
+            kind="vehicle"
+            path={path}
+            current={current}
+            onChange={onChange}
+          />
+          <AttributeEditor
+            title="Person rating"
+            icon={<UserRound size={17} />}
+            attrs={path.driverAttrs}
+            kind="driver"
+            path={path}
+            current={current}
+            onChange={onChange}
+          />
         </div>
       </SheetContent>
     </Sheet>
@@ -377,8 +398,8 @@ export default function ReverseGoalMap() {
             ))}
           </Select>
         </label>
-        <Button type="button" onClick={() => setCurrentRatingOpen(true)}>
-          <SlidersHorizontal size={16} />
+        <Button className="current-rating-trigger" type="button" onClick={() => setCurrentRatingOpen(true)}>
+          <Gauge size={16} />
           Current rating
         </Button>
       </section>
