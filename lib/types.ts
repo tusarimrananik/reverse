@@ -13,11 +13,6 @@ export type Attribute = {
   group: string;
 };
 
-export type DetailContent = {
-  meaning: string;
-  build: string[];
-};
-
 export type Path = {
   name: string;
   description: string;

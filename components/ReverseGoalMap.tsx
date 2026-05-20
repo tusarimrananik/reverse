@@ -21,8 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
-import { DATA } from "@/data/goals";
-import { attributeDetailContent, stepDetailContent } from "@/lib/detailContent";
+import { DATA, attributeDetailContent, stepDetailContent } from "@/data/goals";
 import { avgRating, clamp, clean, currentAttrKey, currentGapClass, stepRating } from "@/lib/ratings";
 import type { Attribute, Goal, Path, Step } from "@/lib/types";
 
