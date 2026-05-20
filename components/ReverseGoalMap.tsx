@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  Car,
+  BriefcaseBusiness,
   ChevronRight,
   CircleDollarSign,
   HeartHandshake,
@@ -115,8 +115,8 @@ function StepStats({ path, step, current }: { path: Path; step: Step; current: C
 
   return (
     <div className="step-stats">
-      <ScoreTile label="System" value={`${vehicleCurrent}/${vehicleRequired}`} />
-      <ScoreTile label="Driver" value={`${driverCurrent}/${driverRequired}`} />
+      <ScoreTile label="Business" value={`${vehicleCurrent}/${vehicleRequired}`} />
+      <ScoreTile label="Person" value={`${driverCurrent}/${driverRequired}`} />
       <ScoreTile label="Gap" value={vehicleGap + driverGap} tone="dark" />
     </div>
   );
@@ -235,11 +235,11 @@ function StepDetails({
                 </Button>
                 <Button variant={view === "driver" ? "default" : "outline"} type="button" onClick={() => setView("driver")}>
                   <UserRound size={16} />
-                  Driver
+                  Person
                 </Button>
                 <Button variant={view === "vehicle" ? "default" : "outline"} type="button" onClick={() => setView("vehicle")}>
-                  <Car size={16} />
-                  System
+                  <BriefcaseBusiness size={16} />
+                  Business
                 </Button>
               </div>
             </div>
@@ -256,10 +256,10 @@ function StepDetails({
               </Card>
             ) : null}
             {view === "driver" ? (
-              <AttributeComparison title="Driver matrix" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
+              <AttributeComparison title="Person matrix" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
             ) : null}
             {view === "vehicle" ? (
-              <AttributeComparison title="System matrix" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
+              <AttributeComparison title="Business matrix" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
             ) : null}
           </div>
         ) : null}
@@ -285,8 +285,8 @@ function CurrentRatingSheet({
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
       <SheetContent className="current-rating-sheet" onClose={onClose}>
         <div className="sheet-scroll">
-          <AttributeEditor title="System rating" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={onChange} />
-          <AttributeEditor title="Driver rating" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={onChange} />
+          <AttributeEditor title="Business rating" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={onChange} />
+          <AttributeEditor title="Person rating" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={onChange} />
         </div>
       </SheetContent>
     </Sheet>
