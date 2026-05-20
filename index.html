@@ -41,7 +41,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
 .toolbar select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#64748b 50%),linear-gradient(135deg,#64748b 50%,transparent 50%);background-position:calc(100% - 18px) 51%,calc(100% - 13px) 51%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:36px}
 .btn{border:0;border-radius:14px;padding:12px 14px;background:var(--ink);color:#fff;font-weight:850;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--shadow-sm)}
 .btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
-.btn:hover,.tab:hover,.path-summary:hover,.step-card>summary:hover{transform:translateY(-1px)}
+.btn:hover,.tab:hover,.step-card>summary:hover{transform:translateY(-1px)}
 .grid-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 16px}
 .stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow-sm);display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;min-width:0}
 .stat:before{content:"\25ce";width:38px;height:38px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;grid-row:1 / span 2;display:grid;place-items:center;color:var(--blue);font-weight:900}
@@ -49,9 +49,8 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
 .stat span{font-size:13px;color:var(--muted);display:block}
 .stat b{font-size:25px;display:block;margin-top:1px;line-height:1.1;overflow-wrap:anywhere}
 .path-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
-.path-summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:18px;align-items:center;padding:20px;transition:background .18s ease,transform .18s ease}
+.path-summary{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:20px;border-bottom:1px solid var(--line);background:#fbfdff}
 .path-summary::-webkit-details-marker,.step-card>summary::-webkit-details-marker{display:none}
-.path-card[open]>.path-summary{border-bottom:1px solid var(--line);background:#fbfdff}
 .path-title{display:flex;align-items:center;gap:14px;min-width:0}
 .num{width:44px;height:44px;background:#eff6ff;color:var(--blue);border:1px solid #bfdbfe;border-radius:14px;display:grid;place-items:center;font-weight:900;flex:0 0 auto}
 .path-card h2{margin:0 0 4px;font-size:24px;line-height:1.15}
@@ -243,14 +242,14 @@ function stepCard(path, step, idx) {
     </div>
   </details>`;
 }
-function pathCard(goal, path, pathIndex, open=false) {
+function pathCard(goal, path, pathIndex) {
   const stepsHtml = goal.steps.map((step, idx) => stepCard(path, step, idx)).join('');
   const id = `${goal.id}-${pathIndex}`;
-  return `<details class="path-card" data-name="${esc(path.name.toLowerCase())}" ${open ? 'open' : ''}>
-    <summary class="path-summary">
+  return `<article class="path-card" data-name="${esc(path.name.toLowerCase())}">
+    <header class="path-summary">
       <div class="path-title"><span class="num">${icon(goalIcon(goal.id))}</span><div><h2>${esc(path.name)}</h2><p>${esc(path.description)}</p></div></div>
       <div class="goal-fit"><span>Goal fit</span><b>${path.goalFit}/10</b></div>
-    </summary>
+    </header>
     <div class="path-body">
       <div class="evidence">${icon('check')}<div><strong>Realistic basis:</strong> ${esc(path.evidence)}</div></div>
       <div class="tabs">
@@ -262,7 +261,7 @@ function pathCard(goal, path, pathIndex, open=false) {
       <section id="${id}-vehicle" class="panel">${tableHtml('Final vehicle/system rating', 'Final end-goal requirement for this path.', path.vehicleAttrs)}</section>
       <section id="${id}-driver" class="panel">${tableHtml('Final driver/person rating', 'Final end-goal requirement for the person driving this path.', path.driverAttrs)}</section>
     </div>
-  </details>`;
+  </article>`;
 }
 function currentGoal() { return DATA.find(g => g.id === goalSelect.value) || DATA[0]; }
 function renderGoalOptions() {
@@ -283,7 +282,7 @@ function renderCards() {
   renderBasis(goal);
   const i = Number(pathSelect.value || 0);
   const p = goal.paths[i];
-  const html = p ? pathCard(goal, p, i, true) : `<div class="empty">No path found.</div>`;
+  const html = p ? pathCard(goal, p, i) : `<div class="empty">No path found.</div>`;
   cards.innerHTML = html;
   bindTabs();
   filterCards();
@@ -325,10 +324,10 @@ function normalizeVisibleText(root=document.body) {
   });
 }
 document.getElementById('openAll').addEventListener('click', () => {
-  document.querySelectorAll('details.path-card, details.step-card').forEach(d => d.open = true);
+  document.querySelectorAll('details.step-card').forEach(d => d.open = true);
 });
 document.getElementById('closeAll').addEventListener('click', () => {
-  document.querySelectorAll('details.path-card, details.step-card').forEach(d => d.open = false);
+  document.querySelectorAll('details.step-card').forEach(d => d.open = false);
 });
 goalSelect.addEventListener('change', () => { renderPathOptions(currentGoal()); search.value = ''; renderCards(); });
 pathSelect.addEventListener('change', renderCards);
