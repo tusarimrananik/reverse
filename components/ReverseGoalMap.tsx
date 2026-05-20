@@ -240,6 +240,7 @@ function StepButton({
       <span className="timeline-index">{number}</span>
       <span className="timeline-main">
         <span className="timeline-meta">
+          {step.label === "Final" ? <span className="final-badge">Final</span> : null}
           <span className={`gap-pill ${currentGapClass(Math.max(vehicleGap, driverGap))}`}>{status}</span>
         </span>
         <strong>{clean(step.title)}</strong>
