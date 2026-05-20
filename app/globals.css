@@ -352,8 +352,6 @@ body.sheet-open {
 .attribute-list {
   display: grid;
   gap: 8px;
-  max-height: 420px;
-  overflow: auto;
 }
 
 .attribute-row {
@@ -576,6 +574,14 @@ body.sheet-open {
 
 .current-rating-heading p {
   color: var(--muted-foreground);
+}
+
+.current-rating-sheet {
+  overflow-y: auto;
+}
+
+.current-rating-sheet .sheet-scroll {
+  overflow: visible;
 }
 
 .comparison-list {
