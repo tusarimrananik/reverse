@@ -566,10 +566,23 @@ body.sheet-open {
   color: #cbd5e1;
 }
 
-.sheet-details-button {
-  width: fit-content;
+.sheet-view-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.sheet-view-switcher .ui-button-outline {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.sheet-view-switcher .ui-button-default {
   color: #111827;
   background: #ffffff;
+  border-color: #ffffff;
 }
 
 .step-meaning-card p {

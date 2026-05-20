@@ -23,6 +23,7 @@ import type { Attribute, Path, Step } from "@/lib/types";
 
 type AttrKind = "vehicle" | "driver";
 type CurrentRatings = Record<string, number>;
+type StepDetailView = "details" | "driver" | "vehicle";
 
 const goalIcons = {
   freedom10m: CircleDollarSign,
@@ -218,10 +219,10 @@ function StepDetails({
   current: CurrentRatings;
   onClose: () => void;
 }) {
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [view, setView] = useState<StepDetailView>("details");
 
   useEffect(() => {
-    setDetailsOpen(false);
+    setView("details");
   }, [step]);
 
   return (
@@ -234,12 +235,20 @@ function StepDetails({
               <h2>{clean(step.title)}</h2>
               <p>{clean(step.note)}</p>
               <StepStats path={path} step={step} current={current} />
-              <Button className="sheet-details-button" variant="outline" type="button" onClick={() => setDetailsOpen((value) => !value)}>
-                <Info size={16} />
-                Details
-              </Button>
+              <div className="sheet-view-switcher" aria-label="Step detail view">
+                <Button variant={view === "details" ? "default" : "outline"} type="button" onClick={() => setView("details")}>
+                  <Info size={16} />
+                  Details
+                </Button>
+                <Button variant={view === "driver" ? "default" : "outline"} type="button" onClick={() => setView("driver")}>
+                  Driver
+                </Button>
+                <Button variant={view === "vehicle" ? "default" : "outline"} type="button" onClick={() => setView("vehicle")}>
+                  Vehicle
+                </Button>
+              </div>
             </div>
-            {detailsOpen ? (
+            {view === "details" ? (
               <Card className="step-meaning-card">
                 <CardHeader>
                   <CardTitle>What this step means</CardTitle>
@@ -251,8 +260,12 @@ function StepDetails({
                 </CardContent>
               </Card>
             ) : null}
-            <AttributeComparison title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
-            <AttributeComparison title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
+            {view === "driver" ? (
+              <AttributeComparison title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
+            ) : null}
+            {view === "vehicle" ? (
+              <AttributeComparison title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
+            ) : null}
           </div>
         ) : null}
       </SheetContent>
