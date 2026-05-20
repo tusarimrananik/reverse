@@ -22,8 +22,9 @@ import { Select } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { DATA } from "@/data/goals";
+import { attributeDetailContent, stepDetailContent } from "@/lib/detailContent";
 import { avgRating, clamp, clean, currentAttrKey, currentGapClass, stepRating } from "@/lib/ratings";
-import type { Attribute, Path, Step } from "@/lib/types";
+import type { Attribute, Goal, Path, Step } from "@/lib/types";
 
 type AttrKind = "vehicle" | "driver";
 type CurrentRatings = Record<string, number>;
@@ -146,83 +147,6 @@ function gapPercent(value: number) {
 
 function matrixLabel(kind: AttrKind) {
   return kind === "vehicle" ? "Business" : "Person";
-}
-
-function attributeBuildPlan(attr: Attribute, kind: AttrKind) {
-  const name = clean(attr.name).toLowerCase();
-  const plans: Record<string, string[]> = {
-    insight: ["Talk to real users weekly.", "Capture repeated pains, objections, and buying triggers.", "Turn guesses into small tests before building bigger."],
-    market: ["Define one narrow segment first.", "Validate urgency with conversations, search, spend, or existing alternatives.", "Choose problems people already try to solve."],
-    traction: ["Create one measurable conversion event.", "Track weekly usage, sales, or commitments.", "Remove friction until progress repeats."],
-    retention: ["Find why people return or quit.", "Improve the core habit, workflow, or outcome.", "Measure repeat usage instead of only first interest."],
-    distribution: ["Pick one channel to master first.", "Create a repeatable outreach, content, or sales loop.", "Track response rate, conversion rate, and cycle time."],
-    economics: ["Know the cost, margin, payback, and pricing logic.", "Test willingness to pay early.", "Cut work that does not improve margin or retention."],
-    scale: ["Document the repeatable process.", "Automate or delegate the most repeated work.", "Design the system so output can grow without equal effort."],
-    moat: ["Build uniqueness through data, workflow depth, trust, brand, or network effects.", "Avoid shallow copies of common ideas.", "Strengthen what competitors cannot quickly replicate."],
-    systems: ["Create checklists, dashboards, and operating routines.", "Reduce memory-based work.", "Make the next action obvious without motivation."],
-    skill: ["Practice in short feedback loops.", "Study examples, then apply immediately.", "Measure improvement by output quality, speed, and consistency."],
-    leadership: ["Clarify ownership and standards.", "Delegate small pieces before delegating big pieces.", "Review outcomes without taking every task back."],
-    habit: ["Make the action small enough to repeat.", "Attach it to an existing routine.", "Use environment design before willpower."],
-    tracking: ["Pick one simple metric.", "Review it on a fixed schedule.", "Use the data to choose the next action."],
-    recovery: ["Plan rest before failure.", "Track warning signs early.", "Use sustainable pacing instead of intensity spikes."],
-  };
-
-  if (name.includes("customer")) return plans.insight;
-  if (name.includes("sales") || name.includes("marketing")) return plans.distribution;
-  if (name.includes("consistency") || name.includes("habit")) return plans.habit;
-  if (name.includes("leadership") || name.includes("delegation")) return plans.leadership;
-
-  return plans[attr.group] || (kind === "vehicle" ? plans.systems : plans.skill);
-}
-
-function stepBuildPlan(step: Step) {
-  const label = step.label.toLowerCase();
-
-  if (label === "final") {
-    return [
-      "Keep the system measurable with a few core indicators.",
-      "Reduce dependence on one person, one channel, or one burst of motivation.",
-      "Protect the habits, economics, or relationship patterns that made the result durable.",
-    ];
-  }
-
-  if (["scale", "stable"].includes(label)) {
-    return [
-      "Document what already works and remove single points of failure.",
-      "Review the numbers or relationship patterns on a fixed schedule.",
-      "Strengthen the weakest side first: Business or Person.",
-    ];
-  }
-
-  if (["repeat", "trend", "repair", "connect"].includes(label)) {
-    return [
-      "Turn the behavior into a weekly operating rhythm.",
-      "Track whether the result repeats without needing perfect conditions.",
-      "Use feedback from real outcomes to adjust the plan.",
-    ];
-  }
-
-  if (["prove", "sell", "proof", "signal"].includes(label)) {
-    return [
-      "Look for observable evidence, not just intention or positive feelings.",
-      "Run small tests that create clear yes/no feedback.",
-      "Repeat the action enough times to separate luck from a real pattern.",
-    ];
-  }
-
-  if (["build", "routine"].includes(label)) {
-    return [
-      "Create the smallest complete version of the system.",
-      "Make the next action obvious and easy to repeat.",
-      "Avoid adding complexity until the basics are consistent.",
-    ];
-  }
-
-  return [
-    "Measure the baseline honestly.",
-    "Choose one small action that can be repeated this week.",
-    "Use the first evidence to decide the next step.",
-  ];
 }
 
 function StepStats({
@@ -377,7 +301,7 @@ function AttributeOverview({
   const now = currentValue(current, path, kind, attr);
   const gap = required - now;
   const label = matrixLabel(kind);
-  const plan = attributeBuildPlan(attr, kind);
+  const details = attributeDetailContent(attr, kind, path, step);
 
   return (
     <div className="attribute-overview">
@@ -414,10 +338,7 @@ function AttributeOverview({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p>
-              This measures how strong <strong>{clean(attr.name)}</strong> needs to be for this step. A high target means
-              this attribute is a major requirement before the step is realistic.
-            </p>
+            <p>{details.meaning}</p>
           </CardContent>
         </Card>
 
@@ -430,8 +351,8 @@ function AttributeOverview({
           </CardHeader>
           <CardContent>
             <ul className="action-list">
-              {plan.map((item) => (
-                <li key={item}>{item}</li>
+              {details.build.map((item) => (
+                <li key={item}>{clean(item)}</li>
               ))}
             </ul>
           </CardContent>
@@ -458,7 +379,7 @@ function CurrentAttributeOverview({
   const target = attr.final;
   const gap = target - now;
   const label = matrixLabel(kind);
-  const plan = attributeBuildPlan(attr, kind);
+  const details = attributeDetailContent(attr, kind, path);
 
   return (
     <div className="attribute-overview">
@@ -495,10 +416,7 @@ function CurrentAttributeOverview({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p>
-              This rating captures your current strength in <strong>{clean(attr.name)}</strong>. Move it up only when
-              you have real evidence, not just confidence.
-            </p>
+            <p>{details.meaning}</p>
           </CardContent>
         </Card>
 
@@ -511,8 +429,8 @@ function CurrentAttributeOverview({
           </CardHeader>
           <CardContent>
             <ul className="action-list">
-              {plan.map((item) => (
-                <li key={item}>{item}</li>
+              {details.build.map((item) => (
+                <li key={item}>{clean(item)}</li>
               ))}
             </ul>
           </CardContent>
@@ -523,14 +441,14 @@ function CurrentAttributeOverview({
   );
 }
 
-function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; current: CurrentRatings }) {
+function StepMeaningDetails({ goal, path, step, current }: { goal: Goal; path: Path; step: Step; current: CurrentRatings }) {
   const businessRequired = avgRating(path.vehicleAttrs, step);
   const personRequired = avgRating(path.driverAttrs, step);
   const businessCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
   const personCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
   const businessGap = Math.max(0, Math.ceil(businessRequired - businessCurrent));
   const personGap = Math.max(0, Math.ceil(personRequired - personCurrent));
-  const buildPlan = stepBuildPlan(step);
+  const details = stepDetailContent(goal, path, step);
 
   return (
     <div className="details-stack">
@@ -553,10 +471,7 @@ function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; c
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p>
-              The stage that must be true before the next higher level becomes realistic. It should show up in repeatable
-              actions, not only intention.
-            </p>
+            <p>{details.meaning}</p>
           </CardContent>
         </Card>
 
@@ -569,8 +484,8 @@ function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; c
           </CardHeader>
           <CardContent>
             <ul className="action-list">
-              {buildPlan.map((item) => (
-                <li key={item}>{item}</li>
+              {details.build.map((item) => (
+                <li key={item}>{clean(item)}</li>
               ))}
               <li>
                 Current gap: Business <strong>{gapPercent(businessGap)}</strong>, Person{" "}
@@ -586,12 +501,14 @@ function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; c
 
 function StepDetails({
   open,
+  goal,
   path,
   step,
   current,
   onClose,
 }: {
   open: boolean;
+  goal: Goal;
   path: Path;
   step: Step | null;
   current: CurrentRatings;
@@ -648,7 +565,7 @@ function StepDetails({
               </div>
             </div>
             {view === "details" ? (
-              <StepMeaningDetails path={path} step={step} current={current} />
+              <StepMeaningDetails goal={goal} path={path} step={step} current={current} />
             ) : null}
             {view === "driver" ? (
               <AttributeComparison
@@ -862,6 +779,7 @@ export default function ReverseGoalMap() {
 
       <StepDetails
         open={selectedStepIndex !== null}
+        goal={goal}
         path={path}
         step={selectedStep}
         current={current}
