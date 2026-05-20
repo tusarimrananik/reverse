@@ -121,8 +121,9 @@ body.sheet-open {
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: 1fr 1.2fr auto;
   gap: 10px;
+  align-items: center;
   padding: 14px 0;
   background: rgba(248, 250, 252, 0.86);
   backdrop-filter: blur(14px);
@@ -148,6 +149,10 @@ body.sheet-open {
   grid-template-columns: 430px minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+}
+
+.workspace-grid-single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .left-rail {
@@ -553,6 +558,24 @@ body.sheet-open {
 
 .detail-heading p {
   color: #cbd5e1;
+}
+
+.current-rating-heading {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.current-rating-heading h2,
+.current-rating-heading p {
+  margin: 0;
+}
+
+.current-rating-heading p {
+  color: var(--muted-foreground);
 }
 
 .comparison-list {

@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   HeartHandshake,
   LineChart,
+  SlidersHorizontal,
   Target,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -238,12 +239,46 @@ function StepDetails({
   );
 }
 
+function CurrentRatingSheet({
+  open,
+  path,
+  current,
+  onChange,
+  onClose,
+}: {
+  open: boolean;
+  path: Path;
+  current: CurrentRatings;
+  onChange: (key: string, value: number) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
+      <SheetContent className="current-rating-sheet" onClose={onClose}>
+        <div className="sheet-scroll">
+          <div className="current-rating-heading">
+            <Badge>
+              <SlidersHorizontal size={14} />
+              Current rating
+            </Badge>
+            <h2>Adjust your current state</h2>
+            <p>These ratings are saved locally and used to calculate the gaps for each reverse step.</p>
+          </div>
+          <AttributeEditor title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={onChange} />
+          <AttributeEditor title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={onChange} />
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 export default function ReverseGoalMap() {
   const [goalId, setGoalId] = useState(DATA[0].id);
   const goal = useMemo(() => DATA.find((item) => item.id === goalId) || DATA[0], [goalId]);
   const [pathIndex, setPathIndex] = useState(0);
   const path = goal.paths[pathIndex] || goal.paths[0];
   const [current, setCurrent] = useState<CurrentRatings>({});
+  const [currentRatingOpen, setCurrentRatingOpen] = useState(false);
   const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
   const GoalIcon = goalIcons[goal.id as keyof typeof goalIcons] || Target;
 
@@ -321,14 +356,13 @@ export default function ReverseGoalMap() {
             ))}
           </Select>
         </label>
+        <Button type="button" onClick={() => setCurrentRatingOpen(true)}>
+          <SlidersHorizontal size={16} />
+          Current rating
+        </Button>
       </section>
 
-      <section className="workspace-grid">
-        <aside className="left-rail">
-          <AttributeEditor title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={updateCurrent} />
-          <AttributeEditor title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={updateCurrent} />
-        </aside>
-
+      <section className="workspace-grid workspace-grid-single">
         <section className="timeline-panel">
           <div className="section-heading">
             <div>
@@ -373,6 +407,13 @@ export default function ReverseGoalMap() {
           setSelectedStepIndex(null);
           updateUrl(null);
         }}
+      />
+      <CurrentRatingSheet
+        open={currentRatingOpen}
+        path={path}
+        current={current}
+        onChange={updateCurrent}
+        onClose={() => setCurrentRatingOpen(false)}
       />
     </main>
   );
