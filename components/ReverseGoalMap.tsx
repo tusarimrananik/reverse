@@ -1,78 +1,65 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowUpRight,
+  BarChart3,
+  CheckCircle2,
+  CircleDollarSign,
+  HeartHandshake,
+  LineChart,
+  Route,
+  Search,
+  Target,
+  UserRound,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Select } from "@/components/ui/select";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { DATA } from "@/data/goals";
-import type { Attribute, Goal, Path, Step } from "@/lib/types";
 import { avgRating, clamp, clean, currentAttrKey, currentGapClass, stepRating } from "@/lib/ratings";
+import type { Attribute, Path, Step } from "@/lib/types";
 
 type AttrKind = "vehicle" | "driver";
 type CurrentRatings = Record<string, number>;
 
-function Icon({ name }: { name: string }) {
-  const icons: Record<string, React.ReactNode> = {
-    target: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="3" />
-      </>
-    ),
-    route: (
-      <>
-        <path d="M3 17 9 7l4 6 3-4 5 8z" />
-        <path d="M3 17h18" />
-      </>
-    ),
-    chart: (
-      <>
-        <path d="M4 19V5" />
-        <path d="M8 19v-4" />
-        <path d="M12 19V9" />
-        <path d="M16 19v-7" />
-        <path d="M20 19V7" />
-      </>
-    ),
-    user: (
-      <>
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21a8 8 0 0 1 16 0" />
-      </>
-    ),
-  };
-
-  return (
-    <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
-      {icons[name] || icons.target}
-    </svg>
-  );
-}
-
-function goalIcon(goalId: string) {
-  if (goalId === "physicalHealth") return "chart";
-  if (goalId === "relationship") return "user";
-  return "target";
-}
+const goalIcons = {
+  freedom10m: CircleDollarSign,
+  physicalHealth: Activity,
+  relationship: HeartHandshake,
+};
 
 function currentValue(current: CurrentRatings, path: Path, kind: AttrKind, attr: Attribute) {
   return current[currentAttrKey(path, kind, attr)] ?? 0;
 }
 
-function avgCurrent(current: CurrentRatings, path: Path, attrs: Attribute[], kind: AttrKind) {
+function averageCurrent(current: CurrentRatings, path: Path, attrs: Attribute[], kind: AttrKind) {
   if (!attrs.length) return 0;
-  const total = attrs.reduce((sum, attr) => sum + currentValue(current, path, kind, attr), 0);
-  return Math.round(total / attrs.length);
+  return Math.round(attrs.reduce((sum, attr) => sum + currentValue(current, path, kind, attr), 0) / attrs.length);
 }
 
-function Bar({ value, current = false }: { value: number; current?: boolean }) {
+function gapLabel(gap: number) {
+  if (gap <= 0) return "Ready";
+  if (gap <= 2) return "Close";
+  return "Build";
+}
+
+function ScoreTile({ label, value, tone = "default" }: { label: string; value: string | number; tone?: "default" | "dark" }) {
   return (
-    <div className="bar">
-      <span className={current ? "current-bar" : undefined} style={{ width: `${clamp(value, 0, 10) * 10}%` }} />
+    <div className={tone === "dark" ? "score-tile score-tile-dark" : "score-tile"}>
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
 
-function CurrentAttributeTable({
+function AttributeEditor({
   title,
-  hint,
   attrs,
   kind,
   path,
@@ -80,7 +67,6 @@ function CurrentAttributeTable({
   onChange,
 }: {
   title: string;
-  hint: string;
   attrs: Attribute[];
   kind: AttrKind;
   path: Path;
@@ -88,192 +74,141 @@ function CurrentAttributeTable({
   onChange: (key: string, value: number) => void;
 }) {
   return (
-    <div className="current-attrs">
-      <h3>{title}</h3>
-      <p className="hint">{hint}</p>
-      <table className="current-table">
-        <tbody>
-          {attrs.map((attr) => {
-            const key = currentAttrKey(path, kind, attr);
-            const value = current[key] ?? 0;
-            return (
-              <tr key={key}>
-                <td>
-                  <strong>{clean(attr.name)}</strong>
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    step="1"
-                    value={value}
-                    aria-label={`Current level for ${clean(attr.name)}`}
-                    onChange={(event) => onChange(key, clamp(Number(event.target.value) || 0, 0, 10))}
-                  />
-                </td>
-                <td>
-                  <Bar value={value} current />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <Card className="attribute-card">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>Rate your current state from 0 to 10.</CardDescription>
+      </CardHeader>
+      <CardContent className="attribute-list">
+        {attrs.map((attr) => {
+          const key = currentAttrKey(path, kind, attr);
+          const value = current[key] ?? 0;
+
+          return (
+            <label className="attribute-row" key={key}>
+              <span>
+                <strong>{clean(attr.name)}</strong>
+                <small>{attr.group}</small>
+              </span>
+              <Input
+                type="number"
+                min="0"
+                max="10"
+                step="1"
+                value={value}
+                aria-label={`Current level for ${clean(attr.name)}`}
+                onChange={(event) => onChange(key, clamp(Number(event.target.value) || 0, 0, 10))}
+              />
+              <Progress value={value} indicatorClassName="progress-current" />
+            </label>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function StepStats({ path, step, current }: { path: Path; step: Step; current: CurrentRatings }) {
+  const vehicleRequired = avgRating(path.vehicleAttrs, step);
+  const driverRequired = avgRating(path.driverAttrs, step);
+  const vehicleCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
+  const driverCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
+  const vehicleGap = Math.max(0, Math.ceil(vehicleRequired - vehicleCurrent));
+  const driverGap = Math.max(0, Math.ceil(driverRequired - driverCurrent));
+
+  return (
+    <div className="step-stats">
+      <ScoreTile label="Vehicle" value={`${vehicleCurrent}/${vehicleRequired}`} />
+      <ScoreTile label="Driver" value={`${driverCurrent}/${driverRequired}`} />
+      <ScoreTile label="Gap" value={vehicleGap + driverGap} tone="dark" />
     </div>
   );
 }
 
-function CurrentRatingPanel({
-  path,
-  current,
-  onChange,
-}: {
-  path: Path;
-  current: CurrentRatings;
-  onChange: (key: string, value: number) => void;
-}) {
-  return (
-    <section className="current-panel" aria-label="Your current levels">
-      <CurrentAttributeTable
-        title="Current Vehicle/System position"
-        hint="Rate where each vehicle/system attribute is right now."
-        attrs={path.vehicleAttrs}
-        kind="vehicle"
-        path={path}
-        current={current}
-        onChange={onChange}
-      />
-      <CurrentAttributeTable
-        title="Current Driver/Skill level"
-        hint="Rate where each skill or behavior attribute is right now."
-        attrs={path.driverAttrs}
-        kind="driver"
-        path={path}
-        current={current}
-        onChange={onChange}
-      />
-    </section>
-  );
-}
-
-function StepSummary({
+function StepButton({
   path,
   step,
   index,
   current,
+  active,
+  onClick,
 }: {
   path: Path;
   step: Step;
   index: number;
   current: CurrentRatings;
+  active: boolean;
+  onClick: () => void;
 }) {
-  const vehicleRequired = avgRating(path.vehicleAttrs, step);
-  const driverRequired = avgRating(path.driverAttrs, step);
-  const vehicleCurrent = avgCurrent(current, path, path.vehicleAttrs, "vehicle");
-  const driverCurrent = avgCurrent(current, path, path.driverAttrs, "driver");
-  const vehicleGap = vehicleRequired - vehicleCurrent;
-  const driverGap = driverRequired - driverCurrent;
+  const vehicleGap = avgRating(path.vehicleAttrs, step) - averageCurrent(current, path, path.vehicleAttrs, "vehicle");
+  const driverGap = avgRating(path.driverAttrs, step) - averageCurrent(current, path, path.driverAttrs, "driver");
+  const status = gapLabel(Math.max(vehicleGap, driverGap));
 
   return (
-    <>
-      <div className="step-head">
-        <span className="step-index">{index + 1}</span>
-        <div>
-          <span className="step-label">{clean(step.label)}</span>
-          <h3>{clean(step.title)}</h3>
-          <div className="note">{clean(step.note)}</div>
-        </div>
-      </div>
-      <div className="step-score">
-        <span>Vehicle req/current</span>
-        <b>
-          {vehicleRequired}/{vehicleCurrent}
-        </b>
-        <span>Driver req/current</span>
-        <b>
-          {driverRequired}/{driverCurrent}
-        </b>
-        <span>Vehicle gap</span>
-        <b>{vehicleGap <= 0 ? 0 : Math.ceil(vehicleGap)}</b>
-        <span>Driver gap</span>
-        <b>{driverGap <= 0 ? 0 : Math.ceil(driverGap)}</b>
-      </div>
-    </>
+    <button className={active ? "timeline-item is-active" : "timeline-item"} type="button" onClick={onClick}>
+      <span className="timeline-index">{index + 1}</span>
+      <span className="timeline-main">
+        <span className="timeline-meta">
+          <Badge>{clean(step.label)}</Badge>
+          <span className={`gap-pill ${currentGapClass(Math.max(vehicleGap, driverGap))}`}>{status}</span>
+        </span>
+        <strong>{clean(step.title)}</strong>
+        <small>{clean(step.note)}</small>
+      </span>
+      <StepStats path={path} step={step} current={current} />
+    </button>
   );
 }
 
-function RatingTable({
+function AttributeComparison({
   title,
-  hint,
   attrs,
-  step,
-  path,
   kind,
+  path,
+  step,
   current,
 }: {
   title: string;
-  hint: string;
   attrs: Attribute[];
-  step: Step;
-  path: Path;
   kind: AttrKind;
+  path: Path;
+  step: Step;
   current: CurrentRatings;
 }) {
   return (
-    <div className="rating-table-wrap">
-      <h4>{title}</h4>
-      <p className="hint">{hint}</p>
-      <table className="rating-table">
-        <thead>
-          <tr>
-            <th>Attribute</th>
-            <th>Your current state</th>
-            <th>Required for this step</th>
-            <th>Gap</th>
-          </tr>
-        </thead>
-        <tbody>
-          {attrs.map((attr) => {
-            const required = stepRating(attr, step);
-            const currentScore = currentValue(current, path, kind, attr);
-            const gap = required - currentScore;
-            return (
-              <tr key={`${kind}-${attr.name}`}>
-                <td>
-                  <strong>{clean(attr.name)}</strong>
-                </td>
-                <td>
-                  <div className="compare-rating">
-                    <Bar value={currentScore} />
-                    <div className="nums">
-                      <b>{currentScore}/10</b>
-                      <small>Your current state</small>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div className="compare-rating">
-                    <Bar value={required} />
-                    <div className="nums">
-                      <b>{required}/10</b>
-                      <small>Required for this step</small>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className={`gap ${currentGapClass(gap)}`}>{gap <= 0 ? 0 : Math.ceil(gap)}</span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>Current rating compared with what this step asks for.</CardDescription>
+      </CardHeader>
+      <CardContent className="comparison-list">
+        {attrs.map((attr) => {
+          const required = stepRating(attr, step);
+          const now = currentValue(current, path, kind, attr);
+          const gap = required - now;
+
+          return (
+            <div className="comparison-row" key={`${kind}-${attr.name}`}>
+              <div>
+                <strong>{clean(attr.name)}</strong>
+                <small>{attr.group}</small>
+              </div>
+              <div className="comparison-bars">
+                <span>Now {now}/10</span>
+                <Progress value={now} indicatorClassName="progress-current" />
+                <span>Need {required}/10</span>
+                <Progress value={required} />
+              </div>
+              <span className={`gap-pill ${currentGapClass(gap)}`}>{Math.max(0, Math.ceil(gap))}</span>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
 
-function StepSheet({
+function StepDetails({
   open,
   path,
   step,
@@ -282,65 +217,29 @@ function StepSheet({
   onClose,
 }: {
   open: boolean;
-  path: Path | null;
+  path: Path;
   step: Step | null;
   stepIndex: number;
   current: CurrentRatings;
   onClose: () => void;
 }) {
-  useEffect(() => {
-    document.body.classList.toggle("sheet-open", open);
-    return () => document.body.classList.remove("sheet-open");
-  }, [open]);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && open) onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
-
   return (
-    <div id="stepSheet" className={`sheet ${open ? "open" : ""}`} aria-hidden={!open}>
-      <button className="sheet-backdrop" type="button" aria-label="Close step details" onClick={onClose} />
-      <aside className="sheet-panel" role="dialog" aria-modal="true" aria-label="Step details">
-        <header className="sheet-header">
-          <button className="sheet-close" type="button" aria-label="Close step details" onClick={onClose}>
-            &times;
-          </button>
-        </header>
-        <div id="stepDetail" className="sheet-body">
-          {path && step ? (
-            <article className="step-card">
-              <div className="step-link">
-                <StepSummary path={path} step={step} index={stepIndex} current={current} />
-              </div>
-              <div className="step-content">
-                <RatingTable
-                  title="Vehicle / System: current vs this step"
-                  hint="Compares your current vehicle/system attributes with this step's required level."
-                  attrs={path.vehicleAttrs}
-                  step={step}
-                  path={path}
-                  kind="vehicle"
-                  current={current}
-                />
-                <RatingTable
-                  title="Driver / Person: current vs this step"
-                  hint="Compares your current skill/behavior attributes with this step's required level."
-                  attrs={path.driverAttrs}
-                  step={step}
-                  path={path}
-                  kind="driver"
-                  current={current}
-                />
-              </div>
-            </article>
-          ) : null}
-        </div>
-      </aside>
-    </div>
+    <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
+      <SheetContent onClose={onClose}>
+        {step ? (
+          <div className="sheet-scroll">
+            <div className="detail-heading">
+              <Badge>{clean(step.label)}</Badge>
+              <h2>{clean(step.title)}</h2>
+              <p>{clean(step.note)}</p>
+              <StepStats path={path} step={step} current={current} />
+            </div>
+            <AttributeComparison title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
+            <AttributeComparison title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
+          </div>
+        ) : null}
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -352,18 +251,19 @@ export default function ReverseGoalMap() {
   const [query, setQuery] = useState("");
   const [current, setCurrent] = useState<CurrentRatings>({});
   const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
+  const GoalIcon = goalIcons[goal.id as keyof typeof goalIcons] || Target;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const nextGoal = params.get("goal");
-    const goalExists = DATA.some((item) => item.id === nextGoal);
-    if (nextGoal && goalExists) setGoalId(nextGoal);
-    if (params.has("path")) setPathIndex(clamp(Number(params.get("path") || 0), 0, DATA[0].paths.length - 1));
-    if (params.has("step")) setSelectedStepIndex(clamp(Number(params.get("step") || 0), 0, DATA[0].steps.length - 1));
+    const initialGoal = DATA.find((item) => item.id === nextGoal) || DATA[0];
+
+    if (nextGoal && initialGoal.id === nextGoal) setGoalId(nextGoal);
+    if (params.has("path")) setPathIndex(clamp(Number(params.get("path") || 0), 0, initialGoal.paths.length - 1));
+    if (params.has("step")) setSelectedStepIndex(clamp(Number(params.get("step") || 0), 0, initialGoal.steps.length - 1));
   }, []);
 
   useEffect(() => {
-    if (!path) return;
     const next: CurrentRatings = {};
     [...path.vehicleAttrs.map((attr) => currentAttrKey(path, "vehicle", attr)), ...path.driverAttrs.map((attr) => currentAttrKey(path, "driver", attr))].forEach((key) => {
       const saved = localStorage.getItem(key);
@@ -372,34 +272,30 @@ export default function ReverseGoalMap() {
     setCurrent(next);
   }, [path]);
 
+  const updateUrl = useCallback(
+    (step: number | null) => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("goal", goal.id);
+      url.searchParams.set("path", String(pathIndex));
+      if (step === null) url.searchParams.delete("step");
+      else url.searchParams.set("step", String(step));
+      history.replaceState(null, "", url);
+    },
+    [goal.id, pathIndex],
+  );
+
   const visibleSteps = goal.steps.filter((step) => {
     const haystack = `${step.label} ${step.title} ${step.note}`.toLowerCase();
     return !query.trim() || haystack.includes(query.trim().toLowerCase());
   });
 
+  const vehicleCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
+  const driverCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
   const selectedStep = selectedStepIndex === null ? null : goal.steps[selectedStepIndex] || null;
 
   function updateCurrent(key: string, value: number) {
     localStorage.setItem(key, String(value));
     setCurrent((previous) => ({ ...previous, [key]: value }));
-  }
-
-  function openStep(index: number) {
-    setSelectedStepIndex(index);
-    const url = new URL(window.location.href);
-    url.searchParams.set("goal", goal.id);
-    url.searchParams.set("path", String(pathIndex));
-    url.searchParams.set("step", String(index));
-    history.replaceState(null, "", url);
-  }
-
-  function closeStep() {
-    setSelectedStepIndex(null);
-    const url = new URL(window.location.href);
-    url.searchParams.set("goal", goal.id);
-    url.searchParams.set("path", String(pathIndex));
-    url.searchParams.delete("step");
-    history.replaceState(null, "", url);
   }
 
   function changeGoal(nextGoalId: string) {
@@ -410,88 +306,146 @@ export default function ReverseGoalMap() {
   }
 
   return (
-    <>
-      <div className="wrap">
-        <div className="toolbar">
-          <label className="control">
-            <Icon name="target" />
-            <select aria-label="Select goal" value={goal.id} onChange={(event) => changeGoal(event.target.value)}>
-              {DATA.map((item) => (
-                <option value={item.id} key={item.id}>
-                  {clean(item.title)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="control">
-            <Icon name="route" />
-            <select
-              aria-label="Select vehicle or path"
-              value={pathIndex}
-              onChange={(event) => {
-                setPathIndex(Number(event.target.value));
-                setSelectedStepIndex(null);
-              }}
-            >
-              {goal.paths.map((item, index) => (
-                <option value={index} key={item.name}>
-                  {clean(item.name)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="control">
-            <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
-            </svg>
-            <input value={query} type="search" placeholder="Search step, skill, attribute..." onChange={(event) => setQuery(event.target.value)} />
-          </label>
+    <main className="app-shell">
+      <section className="hero-panel">
+        <div className="hero-copy">
+          <Badge className="hero-badge">
+            <Route size={14} />
+            Reverse planning workspace
+          </Badge>
+          <h1>{clean(goal.title)}</h1>
+          <p>{clean(goal.subtitle)}</p>
         </div>
+        <div className="hero-stat-grid">
+          <ScoreTile label="Goal fit" value={`${path.goalFit}/10`} tone="dark" />
+          <ScoreTile label="Vehicle now" value={`${vehicleCurrent}/10`} />
+          <ScoreTile label="Driver now" value={`${driverCurrent}/10`} />
+        </div>
+      </section>
 
-        <main id="cards">
-          <article className="path-card" data-name={path.name.toLowerCase()}>
-            <header className="path-summary">
-              <div className="path-title">
-                <span className="num">
-                  <Icon name={goalIcon(goal.id)} />
-                </span>
-                <div>
-                  <h2>{clean(path.name)}</h2>
-                  <p>{clean(path.description)}</p>
-                </div>
+      <section className="control-bar" aria-label="Map filters">
+        <label>
+          <Target size={16} />
+          <Select aria-label="Select goal" value={goal.id} onChange={(event) => changeGoal(event.target.value)}>
+            {DATA.map((item) => (
+              <option value={item.id} key={item.id}>
+                {clean(item.title)}
+              </option>
+            ))}
+          </Select>
+        </label>
+        <label>
+          <GoalIcon size={16} />
+          <Select
+            aria-label="Select path"
+            value={pathIndex}
+            onChange={(event) => {
+              setPathIndex(Number(event.target.value));
+              setSelectedStepIndex(null);
+            }}
+          >
+            {goal.paths.map((item, index) => (
+              <option value={index} key={item.name}>
+                {clean(item.name)}
+              </option>
+            ))}
+          </Select>
+        </label>
+        <label>
+          <Search size={16} />
+          <Input value={query} type="search" placeholder="Search steps..." onChange={(event) => setQuery(event.target.value)} />
+        </label>
+      </section>
+
+      <section className="workspace-grid">
+        <aside className="left-rail">
+          <Card className="path-overview">
+            <CardHeader>
+              <div className="path-icon">
+                <GoalIcon size={20} />
               </div>
-              <div className="goal-fit">
-                <span>Goal fit</span>
-                <b>{path.goalFit}/10</b>
+              <CardTitle>{clean(path.name)}</CardTitle>
+              <CardDescription>{clean(path.description)}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>{clean(path.evidence)}</p>
+              <div className="basis-list">
+                {goal.basis.map((item) => (
+                  <span key={item}>
+                    <CheckCircle2 size={15} />
+                    {clean(item)}
+                  </span>
+                ))}
               </div>
-            </header>
-            <div className="path-body">
-              <CurrentRatingPanel path={path} current={current} onChange={updateCurrent} />
-              <section className="panel active">
-                {visibleSteps.length ? (
-                  visibleSteps.map((step) => {
-                    const originalIndex = goal.steps.indexOf(step);
-                    return (
-                      <button
-                        className={`step-card step-link ${selectedStepIndex === originalIndex ? "active" : ""}`}
-                        type="button"
-                        key={`${step.label}-${step.title}`}
-                        onClick={() => openStep(originalIndex)}
-                      >
-                        <StepSummary path={path} step={step} index={originalIndex} current={current} />
-                      </button>
-                    );
-                  })
-                ) : (
-                  <div className="empty">No step found.</div>
-                )}
-              </section>
+            </CardContent>
+          </Card>
+
+          <AttributeEditor title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={updateCurrent} />
+          <AttributeEditor title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={updateCurrent} />
+        </aside>
+
+        <section className="timeline-panel">
+          <div className="section-heading">
+            <div>
+              <Badge>
+                <LineChart size={14} />
+                {goal.pathLabel}
+              </Badge>
+              <h2>Work backward from the finish line</h2>
             </div>
-          </article>
-        </main>
-      </div>
-      <StepSheet open={selectedStepIndex !== null} path={path} step={selectedStep} stepIndex={selectedStepIndex ?? 0} current={current} onClose={closeStep} />
-    </>
+            <Button variant="outline" type="button" onClick={() => window.print()}>
+              <BarChart3 size={16} />
+              Print
+            </Button>
+          </div>
+
+          <div className="timeline-list">
+            {visibleSteps.length ? (
+              visibleSteps.map((step) => {
+                const originalIndex = goal.steps.indexOf(step);
+                return (
+                  <StepButton
+                    key={`${step.label}-${step.title}`}
+                    path={path}
+                    step={step}
+                    index={originalIndex}
+                    current={current}
+                    active={selectedStepIndex === originalIndex}
+                    onClick={() => {
+                      setSelectedStepIndex(originalIndex);
+                      updateUrl(originalIndex);
+                    }}
+                  />
+                );
+              })
+            ) : (
+              <Card className="empty-state">
+                <CardContent>
+                  <Search size={22} />
+                  <strong>No matching steps</strong>
+                  <span>Try a broader search term.</span>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </section>
+      </section>
+
+      <button className="floating-action" type="button" aria-label="Open selected step" onClick={() => selectedStepIndex !== null && updateUrl(selectedStepIndex)}>
+        <ArrowUpRight size={18} />
+      </button>
+
+      <StepDetails
+        open={selectedStepIndex !== null}
+        path={path}
+        step={selectedStep}
+        stepIndex={selectedStepIndex ?? 0}
+        current={current}
+        onClose={() => {
+          setSelectedStepIndex(null);
+          updateUrl(null);
+        }}
+      />
+    </main>
   );
 }
