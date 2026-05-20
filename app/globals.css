@@ -340,47 +340,6 @@ body.sheet-open {
   color: #ffffff;
 }
 
-.path-overview {
-  overflow: hidden;
-}
-
-.path-icon {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  margin-bottom: 12px;
-  color: #0f766e;
-  background: #e7f8f4;
-  border: 1px solid #bce6dd;
-  border-radius: var(--radius);
-}
-
-.path-overview p {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.92rem;
-}
-
-.basis-list {
-  display: grid;
-  gap: 9px;
-  margin-top: 16px;
-}
-
-.basis-list span {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px;
-  color: #334155;
-  font-size: 0.85rem;
-}
-
-.basis-list svg {
-  color: #0f766e;
-  margin-top: 2px;
-}
-
 .attribute-card {
   overflow: hidden;
 }
@@ -652,9 +611,6 @@ body.sheet-open {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .path-overview {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (max-width: 880px) {

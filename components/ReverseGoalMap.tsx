@@ -5,7 +5,6 @@ import {
   Activity,
   ArrowUpRight,
   BarChart3,
-  CheckCircle2,
   CircleDollarSign,
   HeartHandshake,
   LineChart,
@@ -339,27 +338,6 @@ export default function ReverseGoalMap() {
 
       <section className="workspace-grid">
         <aside className="left-rail">
-          <Card className="path-overview">
-            <CardHeader>
-              <div className="path-icon">
-                <GoalIcon size={20} />
-              </div>
-              <CardTitle>{clean(path.name)}</CardTitle>
-              <CardDescription>{clean(path.description)}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>{clean(path.evidence)}</p>
-              <div className="basis-list">
-                {goal.basis.map((item) => (
-                  <span key={item}>
-                    <CheckCircle2 size={15} />
-                    {clean(item)}
-                  </span>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
           <AttributeEditor title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={updateCurrent} />
           <AttributeEditor title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={updateCurrent} />
         </aside>
