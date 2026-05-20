@@ -290,24 +290,26 @@ function CurrentRatingSheet({
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
       <SheetContent className="current-rating-sheet" onClose={onClose}>
         <div className="sheet-scroll">
-          <AttributeEditor
-            title="Business rating"
-            icon={<BriefcaseBusiness size={17} />}
-            attrs={path.vehicleAttrs}
-            kind="vehicle"
-            path={path}
-            current={current}
-            onChange={onChange}
-          />
-          <AttributeEditor
-            title="Person rating"
-            icon={<UserRound size={17} />}
-            attrs={path.driverAttrs}
-            kind="driver"
-            path={path}
-            current={current}
-            onChange={onChange}
-          />
+          <div className="rating-grid">
+            <AttributeEditor
+              title="Business rating"
+              icon={<BriefcaseBusiness size={17} />}
+              attrs={path.vehicleAttrs}
+              kind="vehicle"
+              path={path}
+              current={current}
+              onChange={onChange}
+            />
+            <AttributeEditor
+              title="Person rating"
+              icon={<UserRound size={17} />}
+              attrs={path.driverAttrs}
+              kind="driver"
+              path={path}
+              current={current}
+              onChange={onChange}
+            />
+          </div>
         </div>
       </SheetContent>
     </Sheet>
