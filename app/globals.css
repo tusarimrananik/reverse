@@ -484,6 +484,18 @@ body.sheet-open {
   font-weight: 850;
 }
 
+.end-goal-badge {
+  display: inline-grid;
+  place-items: center;
+  min-height: 24px;
+  padding: 2px 9px;
+  color: #ffffff;
+  background: var(--brand);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
 .gap-pill.early {
   color: #b42318;
   background: #fef3f2;
