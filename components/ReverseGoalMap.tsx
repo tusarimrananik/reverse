@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  ArrowLeft,
   BadgeCheck,
   BriefcaseBusiness,
   ChevronRight,
@@ -10,6 +11,7 @@ import {
   Gauge,
   HeartHandshake,
   ListChecks,
+  Sparkles,
   TrendingUp,
   Target,
   TriangleAlert,
@@ -27,7 +29,8 @@ import type { Attribute, Path, Step } from "@/lib/types";
 
 type AttrKind = "vehicle" | "driver";
 type CurrentRatings = Record<string, number>;
-type StepDetailView = "details" | "driver" | "vehicle";
+type StepDetailView = "details" | "driver" | "vehicle" | "attribute";
+type SelectedAttribute = { attr: Attribute; kind: AttrKind } | null;
 
 const goalIcons = {
   freedom10m: CircleDollarSign,
@@ -138,6 +141,37 @@ function gapPercent(value: number) {
   return `${clamp(Math.ceil(value), 0, 10) * 10}%`;
 }
 
+function matrixLabel(kind: AttrKind) {
+  return kind === "vehicle" ? "Business" : "Person";
+}
+
+function attributeBuildPlan(attr: Attribute, kind: AttrKind) {
+  const name = clean(attr.name).toLowerCase();
+  const plans: Record<string, string[]> = {
+    insight: ["Talk to real users weekly.", "Capture repeated pains, objections, and buying triggers.", "Turn guesses into small tests before building bigger."],
+    market: ["Define one narrow segment first.", "Validate urgency with conversations, search, spend, or existing alternatives.", "Choose problems people already try to solve."],
+    traction: ["Create one measurable conversion event.", "Track weekly usage, sales, or commitments.", "Remove friction until progress repeats."],
+    retention: ["Find why people return or quit.", "Improve the core habit, workflow, or outcome.", "Measure repeat usage instead of only first interest."],
+    distribution: ["Pick one channel to master first.", "Create a repeatable outreach, content, or sales loop.", "Track response rate, conversion rate, and cycle time."],
+    economics: ["Know the cost, margin, payback, and pricing logic.", "Test willingness to pay early.", "Cut work that does not improve margin or retention."],
+    scale: ["Document the repeatable process.", "Automate or delegate the most repeated work.", "Design the system so output can grow without equal effort."],
+    moat: ["Build uniqueness through data, workflow depth, trust, brand, or network effects.", "Avoid shallow copies of common ideas.", "Strengthen what competitors cannot quickly replicate."],
+    systems: ["Create checklists, dashboards, and operating routines.", "Reduce memory-based work.", "Make the next action obvious without motivation."],
+    skill: ["Practice in short feedback loops.", "Study examples, then apply immediately.", "Measure improvement by output quality, speed, and consistency."],
+    leadership: ["Clarify ownership and standards.", "Delegate small pieces before delegating big pieces.", "Review outcomes without taking every task back."],
+    habit: ["Make the action small enough to repeat.", "Attach it to an existing routine.", "Use environment design before willpower."],
+    tracking: ["Pick one simple metric.", "Review it on a fixed schedule.", "Use the data to choose the next action."],
+    recovery: ["Plan rest before failure.", "Track warning signs early.", "Use sustainable pacing instead of intensity spikes."],
+  };
+
+  if (name.includes("customer")) return plans.insight;
+  if (name.includes("sales") || name.includes("marketing")) return plans.distribution;
+  if (name.includes("consistency") || name.includes("habit")) return plans.habit;
+  if (name.includes("leadership") || name.includes("delegation")) return plans.leadership;
+
+  return plans[attr.group] || (kind === "vehicle" ? plans.systems : plans.skill);
+}
+
 function StepStats({
   path,
   step,
@@ -218,6 +252,7 @@ function AttributeComparison({
   path,
   step,
   current,
+  onSelectAttribute,
 }: {
   title: string;
   attrs: Attribute[];
@@ -225,6 +260,7 @@ function AttributeComparison({
   path: Path;
   step: Step;
   current: CurrentRatings;
+  onSelectAttribute: (selection: { attr: Attribute; kind: AttrKind }) => void;
 }) {
   const sortedAttrs = useMemo(
     () =>
@@ -248,7 +284,7 @@ function AttributeComparison({
           const gap = required - now;
 
           return (
-            <div className="comparison-row" key={`${kind}-${attr.name}`}>
+            <button className="comparison-row" type="button" key={`${kind}-${attr.name}`} onClick={() => onSelectAttribute({ attr, kind })}>
               <div>
                 <strong>{clean(attr.name)}</strong>
                 <small>{attr.group}</small>
@@ -260,11 +296,109 @@ function AttributeComparison({
                 <Progress value={required} />
               </div>
               <span className={`gap-pill ${currentGapClass(gap)}`}>{gapPercent(gap)}</span>
-            </div>
+              <ChevronRight className="comparison-arrow" size={16} />
+            </button>
           );
         })}
       </CardContent>
     </Card>
+  );
+}
+
+function AttributeOverview({
+  selection,
+  path,
+  step,
+  current,
+  onBack,
+}: {
+  selection: { attr: Attribute; kind: AttrKind };
+  path: Path;
+  step: Step;
+  current: CurrentRatings;
+  onBack: () => void;
+}) {
+  const { attr, kind } = selection;
+  const required = stepRating(attr, step);
+  const now = currentValue(current, path, kind, attr);
+  const gap = required - now;
+  const label = matrixLabel(kind);
+  const plan = attributeBuildPlan(attr, kind);
+
+  return (
+    <div className="attribute-overview">
+      <Button className="back-button" variant="outline" type="button" onClick={onBack}>
+        <ArrowLeft size={16} />
+        Back to {label} matrix
+      </Button>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="detail-card-title">
+            {kind === "vehicle" ? <BriefcaseBusiness size={16} /> : <UserRound size={16} />}
+            {clean(attr.name)}
+          </CardTitle>
+          <CardDescription>
+            {label} attribute · {attr.group}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="attribute-overview-content">
+          <div className="attribute-meter-grid">
+            <ScoreTile label="Current" value={ratingPercent(now)} />
+            <ScoreTile label="Target" value={ratingPercent(required)} />
+            <ScoreTile label="Gap" value={gapPercent(gap)} tone="dark" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="details-grid">
+        <Card>
+          <CardHeader>
+            <CardTitle className="detail-card-title">
+              <ListChecks size={16} />
+              Meaning
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>
+              This measures how strong <strong>{clean(attr.name)}</strong> needs to be for this step. A high target means
+              this attribute is a major requirement before the step is realistic.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="detail-card-title">
+              <Sparkles size={16} />
+              How to build it
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="action-list">
+              {plan.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="detail-card-title">
+              <BadgeCheck size={16} />
+              Proof signals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>
+              Look for repeated evidence: clearer decisions, better results, fewer avoidable mistakes, and progress that
+              continues without needing a perfect week.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 
@@ -350,9 +484,11 @@ function StepDetails({
   onClose: () => void;
 }) {
   const [view, setView] = useState<StepDetailView>("details");
+  const [selectedAttribute, setSelectedAttribute] = useState<SelectedAttribute>(null);
 
   useEffect(() => {
     setView("details");
+    setSelectedAttribute(null);
   }, [step]);
 
   return (
@@ -366,11 +502,19 @@ function StepDetails({
                   <ListChecks size={16} />
                   Details
                 </Button>
-                <Button variant={view === "driver" ? "default" : "outline"} type="button" onClick={() => setView("driver")}>
+                <Button
+                  variant={view === "driver" || (view === "attribute" && selectedAttribute?.kind === "driver") ? "default" : "outline"}
+                  type="button"
+                  onClick={() => setView("driver")}
+                >
                   <UserRound size={16} />
                   Person
                 </Button>
-                <Button variant={view === "vehicle" ? "default" : "outline"} type="button" onClick={() => setView("vehicle")}>
+                <Button
+                  variant={view === "vehicle" || (view === "attribute" && selectedAttribute?.kind === "vehicle") ? "default" : "outline"}
+                  type="button"
+                  onClick={() => setView("vehicle")}
+                >
                   <BriefcaseBusiness size={16} />
                   Business
                 </Button>
@@ -380,10 +524,41 @@ function StepDetails({
               <StepMeaningDetails path={path} step={step} current={current} />
             ) : null}
             {view === "driver" ? (
-              <AttributeComparison title="Person matrix" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
+              <AttributeComparison
+                title="Person matrix"
+                attrs={path.driverAttrs}
+                kind="driver"
+                path={path}
+                step={step}
+                current={current}
+                onSelectAttribute={(selection) => {
+                  setSelectedAttribute(selection);
+                  setView("attribute");
+                }}
+              />
             ) : null}
             {view === "vehicle" ? (
-              <AttributeComparison title="Business matrix" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
+              <AttributeComparison
+                title="Business matrix"
+                attrs={path.vehicleAttrs}
+                kind="vehicle"
+                path={path}
+                step={step}
+                current={current}
+                onSelectAttribute={(selection) => {
+                  setSelectedAttribute(selection);
+                  setView("attribute");
+                }}
+              />
+            ) : null}
+            {view === "attribute" && selectedAttribute ? (
+              <AttributeOverview
+                selection={selectedAttribute}
+                path={path}
+                step={step}
+                current={current}
+                onBack={() => setView(selectedAttribute.kind)}
+              />
             ) : null}
           </div>
         ) : null}

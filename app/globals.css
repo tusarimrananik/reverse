@@ -720,13 +720,28 @@ body.sheet-open {
 
 .comparison-row {
   display: grid;
-  grid-template-columns: minmax(130px, 1fr) minmax(220px, 1.5fr) auto;
+  grid-template-columns: minmax(130px, 1fr) minmax(220px, 1.5fr) auto 18px;
   gap: 8px;
   align-items: center;
+  width: 100%;
   padding: 7px 9px;
+  text-align: left;
+  color: inherit;
   background: #fbfdff;
   border: 1px solid #e7edf5;
   border-radius: var(--radius);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.comparison-row:hover {
+  background: #ffffff;
+  border-color: #90d4ca;
+  transform: translateY(-1px);
+}
+
+.comparison-arrow {
+  color: #94a3b8;
+  justify-self: end;
 }
 
 .comparison-bars {
@@ -784,6 +799,36 @@ body.sheet-open {
   font-size: 0.9rem;
 }
 
+.attribute-overview {
+  display: grid;
+  gap: 10px;
+}
+
+.back-button {
+  width: fit-content;
+}
+
+.attribute-overview-content {
+  display: grid;
+  gap: 10px;
+}
+
+.attribute-meter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.action-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 @media (max-width: 1180px) {
   .workspace-grid {
     grid-template-columns: 1fr;
@@ -830,6 +875,10 @@ body.sheet-open {
 
 @media (max-width: 620px) {
   .comparison-row {
+    grid-template-columns: 1fr;
+  }
+
+  .attribute-meter-grid {
     grid-template-columns: 1fr;
   }
 }
