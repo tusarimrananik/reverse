@@ -4,6 +4,8 @@ export type Step = {
   label: string;
   title: string;
   note: string;
+  meaning: string;
+  build: string[];
   factors: StepFactors;
 };
 
@@ -11,6 +13,8 @@ export type Attribute = {
   name: string;
   final: number;
   group: string;
+  meaning: string;
+  build: string[];
 };
 
 export type Path = {

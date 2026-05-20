@@ -109,7 +109,6 @@ function AttributeEditor({
             <div className="attribute-row" key={key}>
               <span>
                 <strong>{clean(attr.name)}</strong>
-                <small>{attr.group}</small>
               </span>
               <button className="attribute-info-button" type="button" aria-label={`Open details for ${clean(attr.name)}`} onClick={() => onSelectAttribute({ attr, kind })}>
                 <ChevronRight size={15} />
@@ -264,7 +263,6 @@ function AttributeComparison({
             <button className="comparison-row" type="button" key={`${kind}-${attr.name}`} onClick={() => onSelectAttribute({ attr, kind })}>
               <div>
                 <strong>{clean(attr.name)}</strong>
-                <small>{attr.group}</small>
               </div>
               <div className="comparison-bars">
                 <span>Current {ratingPercent(now)}</span>
@@ -315,9 +313,7 @@ function AttributeOverview({
             {kind === "vehicle" ? <BriefcaseBusiness size={16} /> : <UserRound size={16} />}
             {clean(attr.name)}
           </CardTitle>
-          <CardDescription>
-            {label} attribute / {attr.group}
-          </CardDescription>
+          <CardDescription>{label} attribute</CardDescription>
         </CardHeader>
         <CardContent className="attribute-overview-content">
           <div className="attribute-meter-grid">
@@ -393,9 +389,7 @@ function CurrentAttributeOverview({
             {kind === "vehicle" ? <BriefcaseBusiness size={16} /> : <UserRound size={16} />}
             {clean(attr.name)}
           </CardTitle>
-          <CardDescription>
-            {label} rating / {attr.group}
-          </CardDescription>
+          <CardDescription>{label} rating</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="attribute-meter-grid">
