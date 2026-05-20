@@ -3,16 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  BadgeCheck,
   BriefcaseBusiness,
   ChevronRight,
   CircleDollarSign,
   Gauge,
   HeartHandshake,
   ListChecks,
+  TrendingUp,
   Target,
+  TriangleAlert,
   UserRound,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -48,10 +50,23 @@ function gapLabel(gap: number) {
   return "Build";
 }
 
-function ScoreTile({ label, value, tone = "default" }: { label: string; value: string | number; tone?: "default" | "dark" }) {
+function ScoreTile({
+  label,
+  value,
+  icon,
+  tone = "default",
+}: {
+  label: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  tone?: "default" | "dark";
+}) {
   return (
     <div className={tone === "dark" ? "score-tile score-tile-dark" : "score-tile"}>
-      <span>{label}</span>
+      <span>
+        {icon}
+        {label}
+      </span>
       <strong>{value}</strong>
     </div>
   );
@@ -120,9 +135,9 @@ function StepStats({ path, step, current }: { path: Path; step: Step; current: C
 
   return (
     <div className="step-stats">
-      <ScoreTile label="Business" value={`${vehicleCurrent}/${vehicleRequired}`} />
-      <ScoreTile label="Person" value={`${driverCurrent}/${driverRequired}`} />
-      <ScoreTile label="Gap" value={vehicleGap + driverGap} tone="dark" />
+      <ScoreTile label="Business" value={`${vehicleCurrent}/${vehicleRequired}`} icon={<BriefcaseBusiness size={13} />} />
+      <ScoreTile label="Person" value={`${driverCurrent}/${driverRequired}`} icon={<UserRound size={13} />} />
+      <ScoreTile label="Gap" value={vehicleGap + driverGap} icon={<TriangleAlert size={13} />} tone="dark" />
     </div>
   );
 }
@@ -231,36 +246,43 @@ function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; c
       <div className="details-grid">
         <Card>
           <CardHeader>
-            <CardTitle>What it means</CardTitle>
+            <CardTitle className="detail-card-title">
+              <ListChecks size={16} />
+              Meaning
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p>
-              This is the state you need before the next higher step becomes realistic. It should be visible in behavior,
-              evidence, and repeated results.
+              The stage that must be true before the next higher level becomes realistic. It should show up in repeatable
+              actions, not only intention.
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>What to prove</CardTitle>
+            <CardTitle className="detail-card-title">
+              <BadgeCheck size={16} />
+              Proof
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p>
-              Look for proof that the business side can support this stage and that the person side can execute it
-              consistently.
+              Confirm the business side can support this stage and the person side can execute it consistently.
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Current gap</CardTitle>
+            <CardTitle className="detail-card-title">
+              <TrendingUp size={16} />
+              Gap
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p>
-              Business gap: <strong>{businessGap}</strong>. Person gap: <strong>{personGap}</strong>. Start with the side
-              with the larger gap.
+              Business <strong>{businessGap}</strong>. Person <strong>{personGap}</strong>. Start with the larger gap.
             </p>
           </CardContent>
         </Card>
