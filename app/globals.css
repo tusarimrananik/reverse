@@ -558,24 +558,6 @@ body.sheet-open {
   color: #cbd5e1;
 }
 
-.current-rating-heading {
-  display: grid;
-  gap: 10px;
-  padding: 18px;
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.current-rating-heading h2,
-.current-rating-heading p {
-  margin: 0;
-}
-
-.current-rating-heading p {
-  color: var(--muted-foreground);
-}
-
 .current-rating-sheet {
   overflow-y: auto;
 }

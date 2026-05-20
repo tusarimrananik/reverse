@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   CircleDollarSign,
   HeartHandshake,
-  LineChart,
   SlidersHorizontal,
   Target,
 } from "lucide-react";
@@ -256,14 +255,6 @@ function CurrentRatingSheet({
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
       <SheetContent className="current-rating-sheet" onClose={onClose}>
         <div className="sheet-scroll">
-          <div className="current-rating-heading">
-            <Badge>
-              <SlidersHorizontal size={14} />
-              Current rating
-            </Badge>
-            <h2>Adjust your current state</h2>
-            <p>These ratings are saved locally and used to calculate the gaps for each reverse step.</p>
-          </div>
           <AttributeEditor title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={onChange} />
           <AttributeEditor title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={onChange} />
         </div>
@@ -364,16 +355,6 @@ export default function ReverseGoalMap() {
 
       <section className="workspace-grid workspace-grid-single">
         <section className="timeline-panel">
-          <div className="section-heading">
-            <div>
-              <Badge>
-                <LineChart size={14} />
-                {goal.pathLabel}
-              </Badge>
-              <h2>Work backward from the finish line</h2>
-            </div>
-          </div>
-
           <div className="timeline-list">
             {goal.steps.map((step, originalIndex) => (
               <StepButton
