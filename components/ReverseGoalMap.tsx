@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  ArrowUpRight,
+  Car,
+  ChevronRight,
   CircleDollarSign,
   HeartHandshake,
-  Info,
+  ListChecks,
   SlidersHorizontal,
   Target,
+  UserRound,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,7 +76,6 @@ function AttributeEditor({
     <Card className="attribute-card">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>Rate your current state from 0 to 10.</CardDescription>
       </CardHeader>
       <CardContent className="attribute-list">
         {attrs.map((attr) => {
@@ -114,7 +115,7 @@ function StepStats({ path, step, current }: { path: Path; step: Step; current: C
 
   return (
     <div className="step-stats">
-      <ScoreTile label="Vehicle" value={`${vehicleCurrent}/${vehicleRequired}`} />
+      <ScoreTile label="System" value={`${vehicleCurrent}/${vehicleRequired}`} />
       <ScoreTile label="Driver" value={`${driverCurrent}/${driverRequired}`} />
       <ScoreTile label="Gap" value={vehicleGap + driverGap} tone="dark" />
     </div>
@@ -124,14 +125,14 @@ function StepStats({ path, step, current }: { path: Path; step: Step; current: C
 function StepButton({
   path,
   step,
-  index,
+  number,
   current,
   active,
   onClick,
 }: {
   path: Path;
   step: Step;
-  index: number;
+  number: number;
   current: CurrentRatings;
   active: boolean;
   onClick: () => void;
@@ -142,16 +143,15 @@ function StepButton({
 
   return (
     <button className={active ? "timeline-item is-active" : "timeline-item"} type="button" onClick={onClick}>
-      <span className="timeline-index">{index + 1}</span>
+      <span className="timeline-index">{number}</span>
       <span className="timeline-main">
         <span className="timeline-meta">
-          <Badge>{clean(step.label)}</Badge>
           <span className={`gap-pill ${currentGapClass(Math.max(vehicleGap, driverGap))}`}>{status}</span>
         </span>
         <strong>{clean(step.title)}</strong>
-        <small>{clean(step.note)}</small>
       </span>
       <StepStats path={path} step={step} current={current} />
+      <ChevronRight className="timeline-arrow" size={18} />
     </button>
   );
 }
@@ -175,7 +175,6 @@ function AttributeComparison({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>Current rating compared with what this step asks for.</CardDescription>
       </CardHeader>
       <CardContent className="comparison-list">
         {attrs.map((attr) => {
@@ -190,9 +189,9 @@ function AttributeComparison({
                 <small>{attr.group}</small>
               </div>
               <div className="comparison-bars">
-                <span>Now {now}/10</span>
+                <span>Current {now}/10</span>
                 <Progress value={now} indicatorClassName="progress-current" />
-                <span>Need {required}/10</span>
+                <span>Target {required}/10</span>
                 <Progress value={required} />
               </div>
               <span className={`gap-pill ${currentGapClass(gap)}`}>{Math.max(0, Math.ceil(gap))}</span>
@@ -208,14 +207,12 @@ function StepDetails({
   open,
   path,
   step,
-  stepIndex,
   current,
   onClose,
 }: {
   open: boolean;
   path: Path;
   step: Step | null;
-  stepIndex: number;
   current: CurrentRatings;
   onClose: () => void;
 }) {
@@ -233,14 +230,16 @@ function StepDetails({
             <div className="detail-heading">
               <div className="sheet-view-switcher" aria-label="Step detail view">
                 <Button variant={view === "details" ? "default" : "outline"} type="button" onClick={() => setView("details")}>
-                  <Info size={16} />
+                  <ListChecks size={16} />
                   Details
                 </Button>
                 <Button variant={view === "driver" ? "default" : "outline"} type="button" onClick={() => setView("driver")}>
+                  <UserRound size={16} />
                   Driver
                 </Button>
                 <Button variant={view === "vehicle" ? "default" : "outline"} type="button" onClick={() => setView("vehicle")}>
-                  Vehicle
+                  <Car size={16} />
+                  System
                 </Button>
               </div>
             </div>
@@ -257,10 +256,10 @@ function StepDetails({
               </Card>
             ) : null}
             {view === "driver" ? (
-              <AttributeComparison title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
+              <AttributeComparison title="Driver matrix" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
             ) : null}
             {view === "vehicle" ? (
-              <AttributeComparison title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
+              <AttributeComparison title="System matrix" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
             ) : null}
           </div>
         ) : null}
@@ -286,8 +285,8 @@ function CurrentRatingSheet({
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
       <SheetContent className="current-rating-sheet" onClose={onClose}>
         <div className="sheet-scroll">
-          <AttributeEditor title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={onChange} />
-          <AttributeEditor title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={onChange} />
+          <AttributeEditor title="System rating" attrs={path.vehicleAttrs} kind="vehicle" path={path} current={current} onChange={onChange} />
+          <AttributeEditor title="Driver rating" attrs={path.driverAttrs} kind="driver" path={path} current={current} onChange={onChange} />
         </div>
       </SheetContent>
     </Sheet>
@@ -392,7 +391,7 @@ export default function ReverseGoalMap() {
                 key={`${step.label}-${step.title}`}
                 path={path}
                 step={step}
-                index={originalIndex}
+                number={goal.steps.length - originalIndex - 1}
                 current={current}
                 active={selectedStepIndex === originalIndex}
                 onClick={() => {
@@ -405,15 +404,10 @@ export default function ReverseGoalMap() {
         </section>
       </section>
 
-      <button className="floating-action" type="button" aria-label="Open selected step" onClick={() => selectedStepIndex !== null && updateUrl(selectedStepIndex)}>
-        <ArrowUpRight size={18} />
-      </button>
-
       <StepDetails
         open={selectedStepIndex !== null}
         path={path}
         step={selectedStep}
-        stepIndex={selectedStepIndex ?? 0}
         current={current}
         onClose={() => {
           setSelectedStepIndex(null);
