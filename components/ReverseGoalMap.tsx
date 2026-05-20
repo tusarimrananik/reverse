@@ -9,10 +9,8 @@ import {
   CircleDollarSign,
   HeartHandshake,
   LineChart,
-  Route,
   Search,
   Target,
-  UserRound,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -289,8 +287,6 @@ export default function ReverseGoalMap() {
     return !query.trim() || haystack.includes(query.trim().toLowerCase());
   });
 
-  const vehicleCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
-  const driverCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
   const selectedStep = selectedStepIndex === null ? null : goal.steps[selectedStepIndex] || null;
 
   function updateCurrent(key: string, value: number) {
@@ -307,22 +303,6 @@ export default function ReverseGoalMap() {
 
   return (
     <main className="app-shell">
-      <section className="hero-panel">
-        <div className="hero-copy">
-          <Badge className="hero-badge">
-            <Route size={14} />
-            Reverse planning workspace
-          </Badge>
-          <h1>{clean(goal.title)}</h1>
-          <p>{clean(goal.subtitle)}</p>
-        </div>
-        <div className="hero-stat-grid">
-          <ScoreTile label="Goal fit" value={`${path.goalFit}/10`} tone="dark" />
-          <ScoreTile label="Vehicle now" value={`${vehicleCurrent}/10`} />
-          <ScoreTile label="Driver now" value={`${driverCurrent}/10`} />
-        </div>
-      </section>
-
       <section className="control-bar" aria-label="Map filters">
         <label>
           <Target size={16} />
