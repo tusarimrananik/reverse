@@ -226,13 +226,23 @@ function AttributeComparison({
   step: Step;
   current: CurrentRatings;
 }) {
+  const sortedAttrs = useMemo(
+    () =>
+      [...attrs].sort((a, b) => {
+        const gapA = stepRating(a, step) - currentValue(current, path, kind, a);
+        const gapB = stepRating(b, step) - currentValue(current, path, kind, b);
+        return gapB - gapA;
+      }),
+    [attrs, current, kind, path, step],
+  );
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="comparison-list">
-        {attrs.map((attr) => {
+        {sortedAttrs.map((attr) => {
           const required = stepRating(attr, step);
           const now = currentValue(current, path, kind, attr);
           const gap = required - now;
