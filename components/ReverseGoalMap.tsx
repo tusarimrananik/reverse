@@ -4,11 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowUpRight,
-  BarChart3,
   CircleDollarSign,
   HeartHandshake,
   LineChart,
-  Search,
   Target,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -245,7 +243,6 @@ export default function ReverseGoalMap() {
   const goal = useMemo(() => DATA.find((item) => item.id === goalId) || DATA[0], [goalId]);
   const [pathIndex, setPathIndex] = useState(0);
   const path = goal.paths[pathIndex] || goal.paths[0];
-  const [query, setQuery] = useState("");
   const [current, setCurrent] = useState<CurrentRatings>({});
   const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
   const GoalIcon = goalIcons[goal.id as keyof typeof goalIcons] || Target;
@@ -281,11 +278,6 @@ export default function ReverseGoalMap() {
     [goal.id, pathIndex],
   );
 
-  const visibleSteps = goal.steps.filter((step) => {
-    const haystack = `${step.label} ${step.title} ${step.note}`.toLowerCase();
-    return !query.trim() || haystack.includes(query.trim().toLowerCase());
-  });
-
   const selectedStep = selectedStepIndex === null ? null : goal.steps[selectedStepIndex] || null;
 
   function updateCurrent(key: string, value: number) {
@@ -297,7 +289,6 @@ export default function ReverseGoalMap() {
     setGoalId(nextGoalId);
     setPathIndex(0);
     setSelectedStepIndex(null);
-    setQuery("");
   }
 
   return (
@@ -330,10 +321,6 @@ export default function ReverseGoalMap() {
             ))}
           </Select>
         </label>
-        <label>
-          <Search size={16} />
-          <Input value={query} type="search" placeholder="Search steps..." onChange={(event) => setQuery(event.target.value)} />
-        </label>
       </section>
 
       <section className="workspace-grid">
@@ -351,40 +338,23 @@ export default function ReverseGoalMap() {
               </Badge>
               <h2>Work backward from the finish line</h2>
             </div>
-            <Button variant="outline" type="button" onClick={() => window.print()}>
-              <BarChart3 size={16} />
-              Print
-            </Button>
           </div>
 
           <div className="timeline-list">
-            {visibleSteps.length ? (
-              visibleSteps.map((step) => {
-                const originalIndex = goal.steps.indexOf(step);
-                return (
-                  <StepButton
-                    key={`${step.label}-${step.title}`}
-                    path={path}
-                    step={step}
-                    index={originalIndex}
-                    current={current}
-                    active={selectedStepIndex === originalIndex}
-                    onClick={() => {
-                      setSelectedStepIndex(originalIndex);
-                      updateUrl(originalIndex);
-                    }}
-                  />
-                );
-              })
-            ) : (
-              <Card className="empty-state">
-                <CardContent>
-                  <Search size={22} />
-                  <strong>No matching steps</strong>
-                  <span>Try a broader search term.</span>
-                </CardContent>
-              </Card>
-            )}
+            {goal.steps.map((step, originalIndex) => (
+              <StepButton
+                key={`${step.label}-${step.title}`}
+                path={path}
+                step={step}
+                index={originalIndex}
+                current={current}
+                active={selectedStepIndex === originalIndex}
+                onClick={() => {
+                  setSelectedStepIndex(originalIndex);
+                  updateUrl(originalIndex);
+                }}
+              />
+            ))}
           </div>
         </section>
       </section>

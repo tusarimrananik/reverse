@@ -121,7 +121,7 @@ body.sheet-open {
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: 1.2fr 1.3fr 1fr;
+  grid-template-columns: 1fr 1.2fr;
   gap: 10px;
   padding: 14px 0;
   background: rgba(248, 250, 252, 0.86);
@@ -582,19 +582,6 @@ body.sheet-open {
   color: var(--muted-foreground);
   font-size: 0.76rem;
   font-weight: 700;
-}
-
-.empty-state .ui-card-content {
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  min-height: 220px;
-  color: var(--muted-foreground);
-  text-align: center;
-}
-
-.empty-state strong {
-  color: var(--foreground);
 }
 
 .floating-action {
