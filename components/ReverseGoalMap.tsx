@@ -12,7 +12,6 @@ import {
   HeartHandshake,
   ListChecks,
   Sparkles,
-  TrendingUp,
   Target,
   TriangleAlert,
   UserRound,
@@ -177,6 +176,56 @@ function attributeBuildPlan(attr: Attribute, kind: AttrKind) {
   return plans[attr.group] || (kind === "vehicle" ? plans.systems : plans.skill);
 }
 
+function stepBuildPlan(step: Step) {
+  const label = step.label.toLowerCase();
+
+  if (label === "final") {
+    return [
+      "Keep the system measurable with a few core indicators.",
+      "Reduce dependence on one person, one channel, or one burst of motivation.",
+      "Protect the habits, economics, or relationship patterns that made the result durable.",
+    ];
+  }
+
+  if (["scale", "stable"].includes(label)) {
+    return [
+      "Document what already works and remove single points of failure.",
+      "Review the numbers or relationship patterns on a fixed schedule.",
+      "Strengthen the weakest side first: Business or Person.",
+    ];
+  }
+
+  if (["repeat", "trend", "repair", "connect"].includes(label)) {
+    return [
+      "Turn the behavior into a weekly operating rhythm.",
+      "Track whether the result repeats without needing perfect conditions.",
+      "Use feedback from real outcomes to adjust the plan.",
+    ];
+  }
+
+  if (["prove", "sell", "proof", "signal"].includes(label)) {
+    return [
+      "Look for observable evidence, not just intention or positive feelings.",
+      "Run small tests that create clear yes/no feedback.",
+      "Repeat the action enough times to separate luck from a real pattern.",
+    ];
+  }
+
+  if (["build", "routine"].includes(label)) {
+    return [
+      "Create the smallest complete version of the system.",
+      "Make the next action obvious and easy to repeat.",
+      "Avoid adding complexity until the basics are consistent.",
+    ];
+  }
+
+  return [
+    "Measure the baseline honestly.",
+    "Choose one small action that can be repeated this week.",
+    "Use the first evidence to decide the next step.",
+  ];
+}
+
 function StepStats({
   path,
   step,
@@ -240,8 +289,8 @@ function StepButton({
       <span className="timeline-index">{number}</span>
       <span className="timeline-main">
         <span className="timeline-meta">
-          {step.label === "Final" ? <span className="final-badge">Final</span> : null}
           <span className={`gap-pill ${currentGapClass(Math.max(vehicleGap, driverGap))}`}>{status}</span>
+          {step.label === "Final" ? <span className="final-badge">Final</span> : null}
         </span>
         <strong>{clean(step.title)}</strong>
       </span>
@@ -509,6 +558,7 @@ function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; c
   const personCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
   const businessGap = Math.max(0, Math.ceil(businessRequired - businessCurrent));
   const personGap = Math.max(0, Math.ceil(personRequired - personCurrent));
+  const buildPlan = stepBuildPlan(step);
 
   return (
     <div className="details-stack">
@@ -541,28 +591,20 @@ function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; c
         <Card>
           <CardHeader>
             <CardTitle className="detail-card-title">
-              <BadgeCheck size={16} />
-              Proof
+              <Sparkles size={16} />
+              How to build it
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p>
-              Confirm the business side can support this stage and the person side can execute it consistently.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <TrendingUp size={16} />
-              Gap
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>
-              Business <strong>{gapPercent(businessGap)}</strong>. Person <strong>{gapPercent(personGap)}</strong>. Start with the larger gap.
-            </p>
+            <ul className="action-list">
+              {buildPlan.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+              <li>
+                Current gap: Business <strong>{gapPercent(businessGap)}</strong>, Person{" "}
+                <strong>{gapPercent(personGap)}</strong>. Start with the larger gap.
+              </li>
+            </ul>
           </CardContent>
         </Card>
       </div>
