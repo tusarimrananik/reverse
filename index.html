@@ -197,7 +197,7 @@ function tableHtml(title, hint, attrs, step=null) {
 function stepCard(path, step, idx) {
   const vAvg = avgRating(path.vehicleAttrs, step);
   const dAvg = avgRating(path.driverAttrs, step);
-  return `<details class="step-card" ${idx===0 ? 'open' : ''}>
+  return `<details class="step-card">
     <summary>
       <div class="step-head"><span class="step-index">${idx + 1}</span><div><span class="step-label">${esc(step.label)}</span><h3>${esc(step.title)}</h3><div class="note">${esc(step.note)}</div></div></div>
       <div class="step-score"><span>Vehicle/System avg</span><b>${vAvg}/10</b><span>Driver/Person avg</span><b>${dAvg}/10</b></div>
