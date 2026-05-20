@@ -149,22 +149,6 @@ body.sheet-open {
   padding: 14px;
 }
 
-.ui-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: fit-content;
-  min-height: 24px;
-  padding: 3px 9px;
-  color: var(--secondary-foreground);
-  background: var(--secondary);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 .ui-button {
   display: inline-flex;
   align-items: center;
@@ -209,7 +193,6 @@ body.sheet-open {
   border: 1px solid transparent;
 }
 
-.ui-input,
 .ui-select {
   width: 100%;
   min-width: 0;
@@ -221,7 +204,6 @@ body.sheet-open {
   border-radius: 10px;
 }
 
-.control-bar .ui-input,
 .control-bar .ui-select {
   padding-left: 40px;
 }
@@ -497,18 +479,6 @@ body.sheet-open {
   min-width: 34px;
   min-height: 24px;
   padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 850;
-}
-
-.final-badge {
-  display: inline-grid;
-  place-items: center;
-  min-height: 24px;
-  padding: 2px 9px;
-  color: #ffffff;
-  background: var(--brand);
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 850;

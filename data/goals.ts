@@ -8,13 +8,11 @@ type DetailContent = {
 };
 
 // Main editable goal/path/step/attribute data.
-// Edit each item's meaning and build fields directly. Content does not use group.
+// Edit each item's meaning and build fields directly.
 export const DATA: Goal[] = [
   {
     "id": "freedom10m",
     "title": "$10M Freedom Reverse Map",
-    "subtitle": "Business/wealth vehicles that could realistically create location freedom, time freedom, and $10M+ wealth.",
-    "pathLabel": "Vehicle",
     "steps": [
       {
         "label": "End Goal",
@@ -228,8 +226,6 @@ export const DATA: Goal[] = [
     "paths": [
       {
         "name": "B2B SaaS Company",
-        "description": "Subscription software sold to businesses.",
-        "goalFit": 10,
         "vehicleAttrs": [
           {
             "name": "Recurring revenue",
@@ -475,13 +471,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "SaaS earns high scores when ARR, retention, gross margin, CAC payback, and Rule-of-40 style efficiency are healthy. It is hard, but the economics can support very large outcomes."
+        ]
       },
       {
         "name": "Vertical SaaS",
-        "description": "Software for one specific industry or workflow.",
-        "goalFit": 10,
         "vehicleAttrs": [
           {
             "name": "Recurring revenue",
@@ -727,13 +720,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Often more realistic for a solo or small technical founder because one narrow market can be understood deeply. The trade-off is that the niche may cap upside unless expanded."
+        ]
       },
       {
         "name": "AI / B2B Automation Company",
-        "description": "AI or automation that saves businesses time or money.",
-        "goalFit": 10,
         "vehicleAttrs": [
           {
             "name": "Measurable time/cost savings",
@@ -979,13 +969,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "High upside because AI can compress labor cost, but defensibility is lower if the product is only a thin wrapper. Ratings reward real workflow ownership and customer savings."
+        ]
       },
       {
         "name": "Software + Data/API Business",
-        "description": "Sell valuable data, API access, developer tools, or infrastructure.",
-        "goalFit": 9,
         "vehicleAttrs": [
           {
             "name": "Recurring/API revenue",
@@ -1231,13 +1218,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Strong if the data/API becomes embedded in customer systems. It needs reliability and unique data/access, not just generic software."
+        ]
       },
       {
         "name": "Marketplace Platform",
-        "description": "Connect two sides: buyers/sellers, clients/providers, supply/demand.",
-        "goalFit": 9,
         "vehicleAttrs": [
           {
             "name": "Network effects",
@@ -1483,13 +1467,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Marketplaces can become huge because network effects compound, but they are harder early because both supply and demand must be solved."
+        ]
       },
       {
         "name": "Productized Service → Software Company",
-        "description": "Start with service cashflow, systemize repeated work, then turn the repeatable part into software.",
-        "goalFit": 8,
         "vehicleAttrs": [
           {
             "name": "Cash-flow base",
@@ -1735,13 +1716,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Realistic for you because service cashflow already exists. The big risk is staying trapped in labor instead of extracting repeatable software."
+        ]
       },
       {
         "name": "Internet Holding Company",
-        "description": "Own multiple software/web assets that compound together.",
-        "goalFit": 8,
         "vehicleAttrs": [
           {
             "name": "Diversified revenue",
@@ -1987,13 +1965,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Works by compounding several smaller wins. It is less dependent on one moonshot, but requires discipline so it does not become scattered."
+        ]
       },
       {
         "name": "Creator/Media Brand + Products",
-        "description": "Build audience and trust, then sell products, software, courses, community, or services.",
-        "goalFit": 8,
         "vehicleAttrs": [
           {
             "name": "Audience trust",
@@ -2239,13 +2214,10 @@ export const DATA: Goal[] = [
               "Review results with metrics and examples instead of taking every task back."
             ]
           }
-        ],
-        "evidence": "Can be powerful because distribution is an asset, but it is attention-dependent and usually slower to convert into $10M unless paired with strong products/software."
+        ]
       },
       {
         "name": "High-Growth Startup With Equity",
-        "description": "Build or join a venture-scale company where equity can become worth $10M+.",
-        "goalFit": 9,
         "vehicleAttrs": [
           {
             "name": "Equity upside",
@@ -2491,13 +2463,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Highest upside, highest uncertainty. The rating is high because equity can compound massively, but control and predictability are lower."
+        ]
       },
       {
         "name": "Investment Holding Company",
-        "description": "Own assets and compound capital over time.",
-        "goalFit": 7,
         "vehicleAttrs": [
           {
             "name": "Capital compounding",
@@ -2743,21 +2712,13 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Useful for making earned money work, but reaching $10M from small capital is usually slower than building a scalable operating business first."
+        ]
       }
-    ],
-    "basis": [
-      "Uses public SaaS/cloud benchmarks such as ARR multiples, gross margin, retention, CAC payback, and Rule-of-40 style efficiency.",
-      "Ratings are realistic estimates of required state, not guarantees or personal scores.",
-      "Absolute Zero is fixed to 0 across all vehicle and driver attributes."
     ]
   },
   {
     "id": "physicalHealth",
     "title": "Physical Health Reverse Map",
-    "subtitle": "Health systems for energy, strength, body composition, sleep, and long-term sustainability.",
-    "pathLabel": "Health goal",
     "steps": [
       {
         "label": "End Goal",
@@ -2933,8 +2894,6 @@ export const DATA: Goal[] = [
     "paths": [
       {
         "name": "General Health & Energy",
-        "description": "Build a sustainable base: movement, strength, sleep, food quality, recovery.",
-        "goalFit": 10,
         "vehicleAttrs": [
           {
             "name": "150–300 min/week aerobic activity",
@@ -3125,13 +3084,10 @@ export const DATA: Goal[] = [
               "Design the environment so the desired action is easier than the old default."
             ]
           }
-        ],
-        "evidence": "Based on public health guidelines: aerobic activity, strength training, less sitting, and 7+ hours of adult sleep are high-leverage health inputs."
+        ]
       },
       {
         "name": "Fat Loss / Lean Body Composition",
-        "description": "Reduce excess body fat while keeping strength, energy, and consistency.",
-        "goalFit": 9,
         "vehicleAttrs": [
           {
             "name": "Calorie awareness",
@@ -3311,13 +3267,10 @@ export const DATA: Goal[] = [
               "Design the environment so the desired action is easier than the old default."
             ]
           }
-        ],
-        "evidence": "Fat loss is mostly a consistency and environment game. The system gets high score only when it protects muscle, sleep, and adherence."
+        ]
       },
       {
         "name": "Strength + Muscle Building",
-        "description": "Become stronger and build visible muscle with progressive training.",
-        "goalFit": 9,
         "vehicleAttrs": [
           {
             "name": "Progressive overload",
@@ -3497,13 +3450,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Strength changes require progressive overload, sufficient recovery, and months/years of boring consistency."
+        ]
       },
       {
         "name": "Cardio Endurance / Heart Health",
-        "description": "Improve stamina, heart fitness, and daily energy.",
-        "goalFit": 9,
         "vehicleAttrs": [
           {
             "name": "Weekly aerobic volume",
@@ -3683,13 +3633,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Scores are anchored around aerobic volume and gradually increasing activity instead of trying to become intense immediately."
+        ]
       },
       {
         "name": "Mobility + Injury Prevention",
-        "description": "Move well, reduce pain risk, and keep training sustainable.",
-        "goalFit": 8,
         "vehicleAttrs": [
           {
             "name": "Joint range of motion",
@@ -3869,21 +3816,13 @@ export const DATA: Goal[] = [
               "Make one adjustment at a time so you can tell what worked."
             ]
           }
-        ],
-        "evidence": "This goal is not flashy, but it protects the ability to train for years."
+        ]
       }
-    ],
-    "basis": [
-      "Uses public health guidelines: 150–300 minutes/week moderate activity or equivalent, strength 2+ days/week, less sitting, and 7+ hours adult sleep.",
-      "Ratings measure how built the health system must be at each step, not your current health status.",
-      "Absolute Zero is fixed to 0 because there is no baseline, habit, or plan yet."
     ]
   },
   {
     "id": "relationship",
     "title": "Relationship Reverse Map",
-    "subtitle": "Relationship systems for romantic, family, friendship, and professional connection.",
-    "pathLabel": "Relationship goal",
     "steps": [
       {
         "label": "End Goal",
@@ -4065,8 +4004,6 @@ export const DATA: Goal[] = [
     "paths": [
       {
         "name": "Romantic Relationship",
-        "description": "Build a safe, stable, loving romantic relationship.",
-        "goalFit": 10,
         "vehicleAttrs": [
           {
             "name": "Trust",
@@ -4257,13 +4194,10 @@ export const DATA: Goal[] = [
               "Repair misses quickly with ownership and a changed system."
             ]
           }
-        ],
-        "evidence": "Relationship ratings use research-informed proxies: positive interaction balance, repair, emotional safety, and consistent respectful behavior."
+        ]
       },
       {
         "name": "Family Relationship",
-        "description": "Improve family connection while keeping healthy boundaries.",
-        "goalFit": 9,
         "vehicleAttrs": [
           {
             "name": "Trust",
@@ -4443,13 +4377,10 @@ export const DATA: Goal[] = [
               "Repair misses quickly with ownership and a changed system."
             ]
           }
-        ],
-        "evidence": "Family goals need both connection and boundaries. A high score does not mean saying yes to everything."
+        ]
       },
       {
         "name": "Friendship / Social Circle",
-        "description": "Build a reliable circle of friends and mutual support.",
-        "goalFit": 8,
         "vehicleAttrs": [
           {
             "name": "Trust",
@@ -4629,13 +4560,10 @@ export const DATA: Goal[] = [
               "Track output quality, speed, consistency, and error rate instead of hours watched."
             ]
           }
-        ],
-        "evidence": "Friendship grows through repeated low-pressure contact. Reliability matters more than dramatic intensity."
+        ]
       },
       {
         "name": "Professional Network / Mentors",
-        "description": "Build valuable professional relationships without being fake or transactional.",
-        "goalFit": 8,
         "vehicleAttrs": [
           {
             "name": "Trust",
@@ -4815,14 +4743,8 @@ export const DATA: Goal[] = [
               "Repair misses quickly with ownership and a changed system."
             ]
           }
-        ],
-        "evidence": "A professional network compounds when you become useful, reliable, and easy to trust."
+        ]
       }
-    ],
-    "basis": [
-      "Uses research-informed relationship signals: trust, positive interaction balance, repair, emotional safety, time, boundaries, and reliability.",
-      "Ratings measure required relationship-system maturity, not personal worth.",
-      "Absolute Zero is fixed to 0 because no intention, contact habit, trust, or communication system exists yet."
     ]
   }
 ];
