@@ -492,7 +492,7 @@ body.sheet-open {
   inset: 0;
   z-index: 50;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(420px, 48vw);
+  grid-template-columns: minmax(0, 1fr) minmax(520px, 56vw);
   pointer-events: none;
   visibility: hidden;
 }
@@ -536,25 +536,38 @@ body.sheet-open {
 .ui-sheet-close-row {
   display: flex;
   justify-content: flex-end;
-  padding: 12px;
+  padding: 8px 10px;
   background: rgba(248, 250, 252, 0.92);
   border-bottom: 1px solid var(--border);
 }
 
+.ui-sheet-close-row .ui-button-icon {
+  width: 32px;
+  height: 32px;
+}
+
 .sheet-scroll {
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 10px;
+  padding: 10px;
   overflow: auto;
 }
 
 .detail-heading {
-  display: grid;
-  gap: 10px;
-  padding: 18px;
-  color: #ffffff;
-  background: #111827;
+  display: flex;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+
+.detail-heading h2 {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 1rem;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .detail-heading h2,
@@ -564,25 +577,33 @@ body.sheet-open {
 
 .detail-heading p {
   color: #cbd5e1;
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .sheet-view-switcher {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   margin-top: 2px;
 }
 
+.sheet-view-switcher .ui-button-md {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+}
+
 .sheet-view-switcher .ui-button-outline {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  color: #111827;
+  background: #ffffff;
+  border-color: var(--border);
 }
 
 .sheet-view-switcher .ui-button-default {
-  color: #111827;
-  background: #ffffff;
-  border-color: #ffffff;
+  color: #ffffff;
+  background: #111827;
+  border-color: #111827;
 }
 
 .step-meaning-card p {
@@ -605,15 +626,15 @@ body.sheet-open {
 
 .comparison-list {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .comparison-row {
   display: grid;
   grid-template-columns: minmax(130px, 1fr) minmax(220px, 1.5fr) auto;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
-  padding: 12px;
+  padding: 7px 9px;
   background: #fbfdff;
   border: 1px solid #e7edf5;
   border-radius: var(--radius);
@@ -622,14 +643,56 @@ body.sheet-open {
 .comparison-bars {
   display: grid;
   grid-template-columns: 76px minmax(0, 1fr);
-  gap: 6px 10px;
+  gap: 4px 8px;
   align-items: center;
 }
 
 .comparison-bars span {
   color: var(--muted-foreground);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 700;
+}
+
+.ui-sheet-content .ui-card-header {
+  padding: 10px 12px 0;
+}
+
+.ui-sheet-content .ui-card-title {
+  font-size: 0.94rem;
+}
+
+.ui-sheet-content .ui-card-description {
+  margin-top: 3px;
+  font-size: 0.78rem;
+}
+
+.ui-sheet-content .ui-card-content {
+  padding: 10px 12px 12px;
+}
+
+.ui-sheet-content .ui-progress {
+  height: 7px;
+}
+
+.ui-sheet-content .gap-pill {
+  min-height: 22px;
+  padding: 1px 7px;
+}
+
+.ui-sheet-content .step-stats {
+  gap: 6px;
+}
+
+.ui-sheet-content .step-stats .score-tile {
+  padding: 7px 8px;
+}
+
+.ui-sheet-content .step-stats .score-tile span {
+  font-size: 0.68rem;
+}
+
+.ui-sheet-content .step-stats .score-tile strong {
+  font-size: 0.9rem;
 }
 
 .floating-action {

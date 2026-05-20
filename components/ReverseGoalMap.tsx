@@ -231,10 +231,6 @@ function StepDetails({
         {step ? (
           <div className="sheet-scroll">
             <div className="detail-heading">
-              <Badge>{clean(step.label)}</Badge>
-              <h2>{clean(step.title)}</h2>
-              <p>{clean(step.note)}</p>
-              <StepStats path={path} step={step} current={current} />
               <div className="sheet-view-switcher" aria-label="Step detail view">
                 <Button variant={view === "details" ? "default" : "outline"} type="button" onClick={() => setView("details")}>
                   <Info size={16} />
@@ -251,12 +247,12 @@ function StepDetails({
             {view === "details" ? (
               <Card className="step-meaning-card">
                 <CardHeader>
-                  <CardTitle>What this step means</CardTitle>
-                  <CardDescription>{clean(step.label)}</CardDescription>
+                  <Badge>{clean(step.label)}</Badge>
+                  <CardTitle>{clean(step.title)}</CardTitle>
+                  <CardDescription>{clean(step.note)}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>{clean(step.title)}</p>
-                  <p>{clean(step.note)}</p>
+                  <StepStats path={path} step={step} current={current} />
                 </CardContent>
               </Card>
             ) : null}
