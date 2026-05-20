@@ -123,17 +123,6 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
 </head>
 <body>
 <div class="wrap">
-  <header class="hero">
-    <div class="kicker">Realistic ratings · dropdown goals · absolute zero fixed</div>
-    <h1 id="heroTitle">Reverse Goal Map</h1>
-    <p id="heroSubtitle">Choose a goal and path to see the reverse map.</p>
-    <div class="hero-metrics" aria-label="Page capabilities">
-      <span class="metric-chip"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Reverse timeline</span>
-      <span class="metric-chip"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"/><path d="M8 19V9"/><path d="M12 19V7"/><path d="M16 19v-5"/><path d="M20 19V4"/></svg>0-10 scoring</span>
-      <span class="metric-chip"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M7 12h10"/><path d="M10 17h4"/></svg>Fast filtering</span>
-    </div>
-  </header>
-
   <div class="toolbar">
     <label class="control"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg><select id="goalSelect" aria-label="Select goal"></select></label>
     <label class="control"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17 9 7l4 6 3-4 5 8z"/><path d="M3 17h18"/></svg><select id="pathSelect" aria-label="Select vehicle or path"></select></label>
@@ -271,8 +260,6 @@ function renderPathOptions(goal) {
   pathSelect.innerHTML = goal.paths.map((p, i) => `<option value="${i}">${esc(p.name)}</option>`).join('');
 }
 function renderBasis(goal) {
-  document.getElementById('heroTitle').textContent = clean(goal.title);
-  document.getElementById('heroSubtitle').textContent = clean(goal.subtitle);
   document.getElementById('statGoal').textContent = clean(goal.title.replace(' Reverse Map',''));
   document.getElementById('statPaths').textContent = goal.paths.length;
   document.getElementById('statSteps').textContent = goal.steps.length;
