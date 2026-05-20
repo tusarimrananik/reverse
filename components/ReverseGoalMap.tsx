@@ -125,19 +125,50 @@ function AttributeEditor({
   );
 }
 
-function StepStats({ path, step, current }: { path: Path; step: Step; current: CurrentRatings }) {
+function readinessPercent(currentValue: number, requiredValue: number) {
+  if (requiredValue <= 0) return 100;
+  return clamp(Math.round((currentValue / requiredValue) * 100), 0, 100);
+}
+
+function StepStats({
+  path,
+  step,
+  current,
+  format = "percent",
+}: {
+  path: Path;
+  step: Step;
+  current: CurrentRatings;
+  format?: "rating" | "percent";
+}) {
   const vehicleRequired = avgRating(path.vehicleAttrs, step);
   const driverRequired = avgRating(path.driverAttrs, step);
   const vehicleCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
   const driverCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
   const vehicleGap = Math.max(0, Math.ceil(vehicleRequired - vehicleCurrent));
   const driverGap = Math.max(0, Math.ceil(driverRequired - driverCurrent));
+  const businessPercent = readinessPercent(vehicleCurrent, vehicleRequired);
+  const personPercent = readinessPercent(driverCurrent, driverRequired);
+  const gapPercent = clamp(100 - Math.round((businessPercent + personPercent) / 2), 0, 100);
 
   return (
     <div className="step-stats">
-      <ScoreTile label="Business" value={`${vehicleCurrent}/${vehicleRequired}`} icon={<BriefcaseBusiness size={13} />} />
-      <ScoreTile label="Person" value={`${driverCurrent}/${driverRequired}`} icon={<UserRound size={13} />} />
-      <ScoreTile label="Gap" value={vehicleGap + driverGap} icon={<TriangleAlert size={13} />} tone="dark" />
+      <ScoreTile
+        label="Business"
+        value={format === "percent" ? `${businessPercent}%` : `${vehicleCurrent}/${vehicleRequired}`}
+        icon={<BriefcaseBusiness size={13} />}
+      />
+      <ScoreTile
+        label="Person"
+        value={format === "percent" ? `${personPercent}%` : `${driverCurrent}/${driverRequired}`}
+        icon={<UserRound size={13} />}
+      />
+      <ScoreTile
+        label="Gap"
+        value={format === "percent" ? `${gapPercent}%` : vehicleGap + driverGap}
+        icon={<TriangleAlert size={13} />}
+        tone="dark"
+      />
     </div>
   );
 }
@@ -170,7 +201,7 @@ function StepButton({
         </span>
         <strong>{clean(step.title)}</strong>
       </span>
-      <StepStats path={path} step={step} current={current} />
+      <StepStats path={path} step={step} current={current} format="percent" />
       <ChevronRight className="timeline-arrow" size={18} />
     </button>
   );
