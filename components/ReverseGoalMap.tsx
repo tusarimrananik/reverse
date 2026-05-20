@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowLeft,
-  BadgeCheck,
   BriefcaseBusiness,
   ChevronRight,
   CircleDollarSign,
@@ -438,20 +437,6 @@ function AttributeOverview({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <BadgeCheck size={16} />
-              Proof signals
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>
-              Look for repeated evidence: clearer decisions, better results, fewer avoidable mistakes, and progress that
-              continues without needing a perfect week.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
@@ -533,19 +518,6 @@ function CurrentAttributeOverview({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <BadgeCheck size={16} />
-              When to increase it
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>
-              Raise the slider when this attribute is showing up repeatedly in your actions, decisions, and outcomes.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
