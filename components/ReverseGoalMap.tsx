@@ -448,7 +448,6 @@ function StepMeaningDetails({ goal, path, step, current }: { goal: Goal; path: P
       <Card className="step-meaning-card">
         <CardHeader>
           <CardTitle>{clean(step.title)}</CardTitle>
-          <CardDescription>{clean(step.note)}</CardDescription>
         </CardHeader>
         <CardContent>
           <StepStats path={path} step={step} current={current} />

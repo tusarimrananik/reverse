@@ -3,7 +3,6 @@ export type StepFactors = Record<string, number>;
 export type Step = {
   label: string;
   title: string;
-  note: string;
   meaning: string;
   build: string[];
   factors: StepFactors;

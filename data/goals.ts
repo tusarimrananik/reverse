@@ -19,7 +19,6 @@ export const DATA: Goal[] = [
       {
         "label": "End Goal",
         "title": "Own a mature asset that can realistically support $10M+ wealth, time freedom, and location freedom.",
-        "note": "Final state: the vehicle has strong economics, durable demand, and the driver can operate or lead it.",
         "factors": {
           "default": 1
         },
@@ -33,7 +32,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 1",
         "title": "Scaled asset with strong revenue, retention, team, systems, and valuable ownership.",
-        "note": "Think: reliable growth engine, measurable retention, clear unit economics, and less founder-dependence.",
         "factors": {
           "market": 0.95,
           "insight": 0.9,
@@ -60,7 +58,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 2",
         "title": "Repeatable growth channel and unit economics are working.",
-        "note": "This is where CAC, payback, gross margin, churn/retention, and distribution begin to matter heavily.",
         "factors": {
           "market": 0.85,
           "insight": 0.78,
@@ -87,7 +84,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 3",
         "title": "Customers/users keep using it because the core value is real.",
-        "note": "Product-market fit is not just launch. It is repeated usage, renewal, expansion, or clear customer pull.",
         "factors": {
           "market": 0.78,
           "insight": 0.7,
@@ -114,7 +110,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 4",
         "title": "First paying customers, users, clients, or owned assets exist.",
-        "note": "The vehicle is no longer only an idea. Someone pays, uses, signs up, buys, invests, or participates.",
         "factors": {
           "market": 0.55,
           "insight": 0.5,
@@ -141,7 +136,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 5",
         "title": "Small MVP, pilot, offer, prototype, or first version exists.",
-        "note": "The goal is not perfection. The goal is a simple test that can create evidence.",
         "factors": {
           "market": 0.4,
           "insight": 0.35,
@@ -168,7 +162,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 6",
         "title": "Painful problem, niche, audience, or asset opportunity is validated before building big.",
-        "note": "This step is mostly customer/problem evidence, not a working company yet.",
         "factors": {
           "market": 0.32,
           "insight": 0.35,
@@ -195,7 +188,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 7",
         "title": "Skill-building and basic preparation only.",
-        "note": "You may be learning, interviewing, writing notes, or studying the market, but the vehicle itself is not built yet.",
         "factors": {
           "market": 0,
           "insight": 0.1,
@@ -222,7 +214,6 @@ export const DATA: Goal[] = [
       {
         "label": "Absolute Zero",
         "title": "Nothing has been built, validated, sold, measured, or practiced yet.",
-        "note": "Important fix: every required rating is 0 here. You do not need customer understanding, sales, product, systems, or revenue before step zero.",
         "factors": {
           "default": 0
         },
@@ -2771,7 +2762,6 @@ export const DATA: Goal[] = [
       {
         "label": "End Goal",
         "title": "Your health system is stable, measurable, and supports high energy for years.",
-        "note": "Final state uses evidence-based targets: activity, strength, sleep, nutrition, recovery, and tracking.",
         "factors": {
           "default": 1
         },
@@ -2785,7 +2775,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 1",
         "title": "The routine has been stable for 12 months with no major relapse.",
-        "note": "You are not relying on motivation. Your environment and habits carry the system.",
         "factors": {
           "cardio": 0.9,
           "strength": 0.9,
@@ -2810,7 +2799,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 2",
         "title": "A 3-month routine is consistent and improving measurable markers.",
-        "note": "Enough time has passed to see weight, strength, endurance, energy, or sleep trend changes.",
         "factors": {
           "cardio": 0.75,
           "strength": 0.75,
@@ -2835,7 +2823,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 3",
         "title": "A weekly routine is working: workouts, food structure, sleep window, and recovery are planned.",
-        "note": "This is where health becomes a normal weekly operating system.",
         "factors": {
           "cardio": 0.55,
           "strength": 0.55,
@@ -2860,7 +2847,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 4",
         "title": "First 30 days of consistency are completed.",
-        "note": "The main win is proof that you can follow a boring but useful plan.",
         "factors": {
           "cardio": 0.35,
           "strength": 0.35,
@@ -2885,7 +2871,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 5",
         "title": "First 7 days are completed without over-optimizing.",
-        "note": "Only the tiny basics matter: move, sleep, drink water, eat a bit better, track simply.",
         "factors": {
           "cardio": 0.18,
           "strength": 0.18,
@@ -2910,7 +2895,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 6",
         "title": "Baseline is measured and the smallest next action is chosen.",
-        "note": "You know your current weight/steps/sleep/activity level and you choose one simple action.",
         "factors": {
           "cardio": 0.05,
           "strength": 0.05,
@@ -2935,7 +2919,6 @@ export const DATA: Goal[] = [
       {
         "label": "Absolute Zero",
         "title": "No baseline, no routine, no tracking, no plan.",
-        "note": "Everything starts at 0 here.",
         "factors": {
           "default": 0
         },
@@ -3905,7 +3888,6 @@ export const DATA: Goal[] = [
       {
         "label": "End Goal",
         "title": "A healthy, safe, stable relationship system exists and is maintained intentionally.",
-        "note": "Final state means trust, communication, repair, time, and boundaries are consistently practiced.",
         "factors": {
           "default": 1
         },
@@ -3919,7 +3901,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 1",
         "title": "Long-term trust is maintained through reliability, respect, and regular positive connection.",
-        "note": "The relationship is not perfect, but the pattern is safe and stable.",
         "factors": {
           "trust": 0.9,
           "communication": 0.88,
@@ -3945,7 +3926,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 2",
         "title": "Conflict can be repaired without contempt, defensiveness, or silent damage.",
-        "note": "Repair matters because all close relationships have conflict.",
         "factors": {
           "trust": 0.75,
           "communication": 0.78,
@@ -3971,7 +3951,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 3",
         "title": "Regular quality time and honest communication are happening.",
-        "note": "Connection is repeated, not accidental.",
         "factors": {
           "trust": 0.55,
           "communication": 0.6,
@@ -3997,7 +3976,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 4",
         "title": "The first honest conversations and small acts of care begin.",
-        "note": "This is still early. You are creating signals of trust and respect.",
         "factors": {
           "trust": 0.38,
           "communication": 0.42,
@@ -4023,7 +4001,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 5",
         "title": "A basic contact/follow-up habit exists.",
-        "note": "The relationship is not deep yet. The only real proof is repeated respectful contact.",
         "factors": {
           "trust": 0.18,
           "communication": 0.22,
@@ -4049,7 +4026,6 @@ export const DATA: Goal[] = [
       {
         "label": "Previous Step 6",
         "title": "You identify the people, standards, and kind of relationship you want to build.",
-        "note": "This is awareness and intention, not relationship strength yet.",
         "factors": {
           "trust": 0.03,
           "communication": 0.06,
@@ -4075,7 +4051,6 @@ export const DATA: Goal[] = [
       {
         "label": "Absolute Zero",
         "title": "No intention, no contact habit, no trust, no communication system.",
-        "note": "Everything starts at 0 here.",
         "factors": {
           "default": 0
         },
