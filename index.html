@@ -63,6 +63,15 @@ body.sheet-open{overflow:hidden}
 .goal-fit span{font-size:13px;display:block}
 .goal-fit b{font-size:25px;color:#fff}
 .path-body{padding:20px;background:#fff}
+.current-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.current-attrs{border:1px solid var(--line);border-radius:16px;background:#fbfdff;padding:14px;overflow:auto}
+.current-attrs h3{margin:0 0 4px;font-size:18px}
+.current-attrs .hint{margin-bottom:10px!important}
+.current-table{width:100%;border-collapse:collapse;min-width:420px}
+.current-table td{border-bottom:1px solid #eef0f4;padding:9px 7px;vertical-align:middle}
+.current-table tr:last-child td{border-bottom:0}
+.current-table input{width:74px;border:1px solid var(--line);border-radius:12px;padding:8px 9px;color:var(--ink);background:#fff}
+.current-table .bar span{background:linear-gradient(90deg,var(--amber),var(--green))}
 .panel{display:block}
 .step-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:12px;background:#fff}
 .step-link{color:inherit;text-decoration:none;padding:16px;display:flex;justify-content:space-between;gap:14px;align-items:flex-start;transition:background .18s ease,transform .18s ease}
@@ -101,6 +110,7 @@ body.sheet-open{overflow:hidden}
   .step-content{grid-template-columns:1fr}
   .path-summary{flex-direction:column;align-items:flex-start}
   .goal-fit{width:100%}
+  .current-panel{grid-template-columns:1fr}
   .step-link{flex-direction:column}
   .step-score{width:100%}
 }
@@ -195,13 +205,56 @@ function avgRating(attrs, step) {
   const total = attrs.reduce((sum, attr) => sum + stepRating(attr, step), 0);
   return Math.round(total / attrs.length);
 }
-function ratingRow(attr, step) {
-  const score = stepRating(attr, step);
-  const gap = attr.final - score;
+function currentGapClass(gap) {
+  if (gap <= 0) return 'complete';
+  if (gap <= 2) return 'building';
+  return 'early';
+}
+function currentAttrKey(path, kind, attr) {
+  return `reverseGoalMap.current.${path.name}.${kind}.${attr.name}`;
+}
+function getAttrCurrent(path, kind, attr) {
+  const saved = localStorage.getItem(currentAttrKey(path, kind, attr));
+  return saved === null ? 0 : clamp(Number(saved), 0, 10);
+}
+function avgCurrent(path, attrs, kind) {
+  if (!attrs.length) return 0;
+  const total = attrs.reduce((sum, attr) => sum + getAttrCurrent(path, kind, attr), 0);
+  return Math.round(total / attrs.length);
+}
+function currentAttrRows(path, attrs, kind) {
+  return attrs.map(attr => {
+    const current = getAttrCurrent(path, kind, attr);
+    return `<tr>
+      <td><strong>${esc(attr.name)}</strong></td>
+      <td><input class="attr-current" type="number" min="0" max="10" step="1" value="${current}" data-key="${esc(currentAttrKey(path, kind, attr))}" aria-label="Current level for ${esc(attr.name)}" /></td>
+      <td><div class="bar"><span style="width:${current * 10}%"></span></div></td>
+    </tr>`;
+  }).join('');
+}
+function currentRatingPanel(path) {
+  return `<section class="current-panel" aria-label="Your current levels">
+    <div class="current-attrs">
+      <h3>Current Vehicle/System position</h3>
+      <p class="hint">Rate where each vehicle/system attribute is right now.</p>
+      <table class="current-table"><tbody>${currentAttrRows(path, path.vehicleAttrs, 'vehicle')}</tbody></table>
+    </div>
+    <div class="current-attrs">
+      <h3>Current Driver/Skill level</h3>
+      <p class="hint">Rate where each skill or behavior attribute is right now.</p>
+      <table class="current-table"><tbody>${currentAttrRows(path, path.driverAttrs, 'driver')}</tbody></table>
+    </div>
+  </section>`;
+}
+function ratingRow(attr, step, path, kind) {
+  const required = stepRating(attr, step);
+  const current = getAttrCurrent(path, kind, attr);
+  const gap = required - current;
   return `<tr>
     <td><strong>${esc(attr.name)}</strong></td>
-    <td><div class="compare-rating"><div class="bar"><span style="width:${score * 10}%"></span></div><div class="nums"><b>${score}/10</b><small>Final ${attr.final}/10 · Gap ${gap}</small></div></div></td>
-    <td><span class="gap ${gapClass(gap)}">${gap}</span></td>
+    <td><div class="compare-rating"><div class="bar"><span style="width:${current * 10}%"></span></div><div class="nums"><b>${current}/10</b><small>Your current state</small></div></div></td>
+    <td><div class="compare-rating"><div class="bar"><span style="width:${required * 10}%"></span></div><div class="nums"><b>${required}/10</b><small>Required for this step</small></div></div></td>
+    <td><span class="gap ${currentGapClass(gap)}">${gap <= 0 ? 0 : Math.ceil(gap)}</span></td>
   </tr>`;
 }
 function finalRow(attr) {
@@ -211,12 +264,12 @@ function finalRow(attr) {
     <td><span class="gap complete">0</span></td>
   </tr>`;
 }
-function tableHtml(title, hint, attrs, step=null) {
-  const rows = attrs.map(attr => step ? ratingRow(attr, step) : finalRow(attr)).join('');
+function tableHtml(title, hint, attrs, step=null, path=null, kind='vehicle') {
+  const rows = attrs.map(attr => step ? ratingRow(attr, step, path, kind) : finalRow(attr)).join('');
   return `<div class="rating-table-wrap">
     <h4>${esc(title)}</h4>
     <p class="hint">${esc(hint)}</p>
-    <table class="rating-table"><thead><tr><th>Attribute</th><th>Step rating → final rating</th><th>Gap</th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="rating-table"><thead><tr><th>Attribute</th><th>Your current state</th><th>Required for this step</th><th>Gap</th></tr></thead><tbody>${rows}</tbody></table>
   </div>`;
 }
 function stepUrl(goal, pathIndex, stepIndex) {
@@ -231,8 +284,12 @@ function stepUrl(goal, pathIndex, stepIndex) {
 function stepSummaryHtml(path, step, idx) {
   const vAvg = avgRating(path.vehicleAttrs, step);
   const dAvg = avgRating(path.driverAttrs, step);
+  const vehicleCurrent = avgCurrent(path, path.vehicleAttrs, 'vehicle');
+  const driverCurrent = avgCurrent(path, path.driverAttrs, 'driver');
+  const vehicleGap = vAvg - vehicleCurrent;
+  const driverGap = dAvg - driverCurrent;
   return `<div class="step-head"><span class="step-index">${idx + 1}</span><div><span class="step-label">${esc(step.label)}</span><h3>${esc(step.title)}</h3><div class="note">${esc(step.note)}</div></div></div>
-    <div class="step-score"><span>Vehicle/System avg</span><b>${vAvg}/10</b><span>Driver/Person avg</span><b>${dAvg}/10</b></div>`;
+    <div class="step-score"><span>Vehicle req/current</span><b>${vAvg}/${vehicleCurrent}</b><span>Driver req/current</span><b>${dAvg}/${driverCurrent}</b><span>Vehicle gap</span><b>${vehicleGap <= 0 ? 0 : Math.ceil(vehicleGap)}</b><span>Driver gap</span><b>${driverGap <= 0 ? 0 : Math.ceil(driverGap)}</b></div>`;
 }
 function stepCard(goal, path, pathIndex, step, idx) {
   return `<a class="step-card step-link" href="${esc(stepUrl(goal, pathIndex, idx))}" data-path="${pathIndex}" data-step="${idx}">
@@ -245,8 +302,8 @@ function stepDetailHtml(path, step, idx) {
       ${stepSummaryHtml(path, step, idx)}
     </div>
     <div class="step-content">
-      ${tableHtml('Vehicle / System: required attributes in this state', 'This rating shows how much of the external system/vehicle needs to exist at this step.', path.vehicleAttrs, step)}
-      ${tableHtml('Driver / Person: required attributes in this state', 'This rating shows the skill/behavior level required at this exact step.', path.driverAttrs, step)}
+      ${tableHtml('Vehicle / System: current vs this step', 'Compares your current vehicle/system attributes with this step’s required level.', path.vehicleAttrs, step, path, 'vehicle')}
+      ${tableHtml('Driver / Person: current vs this step', 'Compares your current skill/behavior attributes with this step’s required level.', path.driverAttrs, step, path, 'driver')}
     </div>
   </article>`;
 }
@@ -259,6 +316,7 @@ function pathCard(goal, path, pathIndex) {
       <div class="goal-fit"><span>Goal fit</span><b>${path.goalFit}/10</b></div>
     </header>
     <div class="path-body">
+      ${currentRatingPanel(path)}
       <section id="${id}-steps" class="panel active">${stepsHtml}</section>
     </div>
   </article>`;
@@ -323,6 +381,13 @@ function renderStepDetail(pathIndex, stepIndex, updateUrl=true) {
   normalizeVisibleText(stepDetail);
   openStepSheet();
 }
+function updateAttrCurrent(input) {
+  const raw = Number(input.value);
+  const value = Number.isFinite(raw) ? clamp(raw, 0, 10) : 0;
+  input.value = value;
+  localStorage.setItem(input.dataset.key, String(value));
+  renderCards();
+}
 function filterCards() {
   const q = search.value.trim().toLowerCase();
   document.querySelectorAll('.path-card').forEach(card => {
@@ -348,10 +413,15 @@ goalSelect.addEventListener('change', () => { renderPathOptions(currentGoal()); 
 pathSelect.addEventListener('change', () => { renderCards(); clearStepRoute(); });
 search.addEventListener('input', filterCards);
 cards.addEventListener('click', event => {
+  const currentInput = event.target.closest('.attr-current');
+  if (currentInput) return;
   const link = event.target.closest('.step-link');
   if (!link) return;
   event.preventDefault();
   renderStepDetail(link.dataset.path, link.dataset.step);
+});
+cards.addEventListener('change', event => {
+  if (event.target.classList.contains('attr-current')) updateAttrCurrent(event.target);
 });
 sheetClose.addEventListener('click', () => closeStepSheet());
 sheetBackdrop.addEventListener('click', () => closeStepSheet());
