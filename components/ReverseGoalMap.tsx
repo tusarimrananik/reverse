@@ -344,7 +344,7 @@ function AttributeOverview({
             {clean(attr.name)}
           </CardTitle>
           <CardDescription>
-            {label} attribute · {attr.group}
+            {label} attribute / {attr.group}
           </CardDescription>
         </CardHeader>
         <CardContent className="attribute-overview-content">
@@ -439,7 +439,7 @@ function CurrentAttributeOverview({
             {clean(attr.name)}
           </CardTitle>
           <CardDescription>
-            {label} rating · {attr.group}
+            {label} rating / {attr.group}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -597,14 +597,24 @@ function StepDetails({
           <div className="sheet-scroll">
             <div className="detail-heading">
               <div className="sheet-view-switcher" aria-label="Step detail view">
-                <Button variant={view === "details" ? "default" : "outline"} type="button" onClick={() => setView("details")}>
+                <Button
+                  variant={view === "details" ? "default" : "outline"}
+                  type="button"
+                  onClick={() => {
+                    setSelectedAttribute(null);
+                    setView("details");
+                  }}
+                >
                   <ListChecks size={16} />
                   Details
                 </Button>
                 <Button
                   variant={view === "driver" || (view === "attribute" && selectedAttribute?.kind === "driver") ? "default" : "outline"}
                   type="button"
-                  onClick={() => setView("driver")}
+                  onClick={() => {
+                    setSelectedAttribute(null);
+                    setView("driver");
+                  }}
                 >
                   <UserRound size={16} />
                   Person
@@ -612,7 +622,10 @@ function StepDetails({
                 <Button
                   variant={view === "vehicle" || (view === "attribute" && selectedAttribute?.kind === "vehicle") ? "default" : "outline"}
                   type="button"
-                  onClick={() => setView("vehicle")}
+                  onClick={() => {
+                    setSelectedAttribute(null);
+                    setView("vehicle");
+                  }}
                 >
                   <BriefcaseBusiness size={16} />
                   Business
@@ -683,7 +696,7 @@ function CurrentRatingSheet({
 
   useEffect(() => {
     if (!open) setSelectedAttribute(null);
-  }, [open]);
+  }, [open, path]);
 
   return (
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
