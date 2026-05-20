@@ -628,6 +628,13 @@ body.sheet-open {
   border-radius: var(--radius);
 }
 
+.step-detail-sheet .detail-heading {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
 .detail-heading h2 {
   display: -webkit-box;
   overflow: hidden;
@@ -681,6 +688,24 @@ body.sheet-open {
 .step-meaning-card p + p {
   margin-top: 10px;
   color: var(--muted-foreground);
+}
+
+.details-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.details-grid p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .current-rating-sheet {
@@ -844,6 +869,10 @@ body.sheet-open {
 
   .ui-sheet-content {
     grid-column: 1;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
   }
 
   .current-rating-sheet.ui-sheet-content {

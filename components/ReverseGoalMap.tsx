@@ -208,6 +208,67 @@ function AttributeComparison({
   );
 }
 
+function StepMeaningDetails({ path, step, current }: { path: Path; step: Step; current: CurrentRatings }) {
+  const businessRequired = avgRating(path.vehicleAttrs, step);
+  const personRequired = avgRating(path.driverAttrs, step);
+  const businessCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
+  const personCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
+  const businessGap = Math.max(0, Math.ceil(businessRequired - businessCurrent));
+  const personGap = Math.max(0, Math.ceil(personRequired - personCurrent));
+
+  return (
+    <div className="details-stack">
+      <Card className="step-meaning-card">
+        <CardHeader>
+          <CardTitle>{clean(step.title)}</CardTitle>
+          <CardDescription>{clean(step.note)}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StepStats path={path} step={step} current={current} />
+        </CardContent>
+      </Card>
+
+      <div className="details-grid">
+        <Card>
+          <CardHeader>
+            <CardTitle>What it means</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>
+              This is the state you need before the next higher step becomes realistic. It should be visible in behavior,
+              evidence, and repeated results.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>What to prove</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>
+              Look for proof that the business side can support this stage and that the person side can execute it
+              consistently.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Current gap</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>
+              Business gap: <strong>{businessGap}</strong>. Person gap: <strong>{personGap}</strong>. Start with the side
+              with the larger gap.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function StepDetails({
   open,
   path,
@@ -229,7 +290,7 @@ function StepDetails({
 
   return (
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
-      <SheetContent onClose={onClose}>
+      <SheetContent className="step-detail-sheet" onClose={onClose}>
         {step ? (
           <div className="sheet-scroll">
             <div className="detail-heading">
@@ -249,16 +310,7 @@ function StepDetails({
               </div>
             </div>
             {view === "details" ? (
-              <Card className="step-meaning-card">
-                <CardHeader>
-                  <Badge>{clean(step.label)}</Badge>
-                  <CardTitle>{clean(step.title)}</CardTitle>
-                  <CardDescription>{clean(step.note)}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <StepStats path={path} step={step} current={current} />
-                </CardContent>
-              </Card>
+              <StepMeaningDetails path={path} step={step} current={current} />
             ) : null}
             {view === "driver" ? (
               <AttributeComparison title="Person matrix" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
