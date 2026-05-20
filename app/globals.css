@@ -301,12 +301,12 @@ body.sheet-open {
 .ui-progress-indicator {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #2563eb, #0f766e);
+  background: #2563eb;
   border-radius: inherit;
 }
 
 .progress-current {
-  background: linear-gradient(90deg, #d97706, #16a34a);
+  background: #0f766e;
 }
 
 .score-tile {
@@ -382,14 +382,22 @@ body.sheet-open {
   font-size: 0.78rem;
 }
 
-.attribute-row .ui-progress {
+.ui-slider {
   grid-column: 1 / -1;
+  width: 100%;
+  accent-color: #0f766e;
 }
 
-.attribute-row .ui-input {
-  min-height: 36px;
-  padding: 0 8px;
-  text-align: center;
+.ui-slider:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.22);
+  outline-offset: 4px;
+}
+
+.rating-value {
+  justify-self: end;
+  color: #0f766e;
+  font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .timeline-list {
@@ -556,6 +564,22 @@ body.sheet-open {
 
 .detail-heading p {
   color: #cbd5e1;
+}
+
+.sheet-details-button {
+  width: fit-content;
+  color: #111827;
+  background: #ffffff;
+}
+
+.step-meaning-card p {
+  margin: 0;
+  color: #334155;
+}
+
+.step-meaning-card p + p {
+  margin-top: 10px;
+  color: var(--muted-foreground);
 }
 
 .current-rating-sheet {

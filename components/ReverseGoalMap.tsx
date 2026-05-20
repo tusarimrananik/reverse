@@ -6,16 +6,17 @@ import {
   ArrowUpRight,
   CircleDollarSign,
   HeartHandshake,
+  Info,
   SlidersHorizontal,
   Target,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Slider } from "@/components/ui/slider";
 import { DATA } from "@/data/goals";
 import { avgRating, clamp, clean, currentAttrKey, currentGapClass, stepRating } from "@/lib/ratings";
 import type { Attribute, Path, Step } from "@/lib/types";
@@ -85,16 +86,15 @@ function AttributeEditor({
                 <strong>{clean(attr.name)}</strong>
                 <small>{attr.group}</small>
               </span>
-              <Input
-                type="number"
+              <strong className="rating-value">{value}/10</strong>
+              <Slider
                 min="0"
                 max="10"
                 step="1"
-                value={value}
-                aria-label={`Current level for ${clean(attr.name)}`}
-                onChange={(event) => onChange(key, clamp(Number(event.target.value) || 0, 0, 10))}
+                value={[value]}
+                aria-label={`Current rating slider for ${clean(attr.name)}`}
+                onValueChange={([nextValue]) => onChange(key, clamp(nextValue || 0, 0, 10))}
               />
-              <Progress value={value} indicatorClassName="progress-current" />
             </label>
           );
         })}
@@ -218,6 +218,12 @@ function StepDetails({
   current: CurrentRatings;
   onClose: () => void;
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  useEffect(() => {
+    setDetailsOpen(false);
+  }, [step]);
+
   return (
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
       <SheetContent onClose={onClose}>
@@ -228,7 +234,23 @@ function StepDetails({
               <h2>{clean(step.title)}</h2>
               <p>{clean(step.note)}</p>
               <StepStats path={path} step={step} current={current} />
+              <Button className="sheet-details-button" variant="outline" type="button" onClick={() => setDetailsOpen((value) => !value)}>
+                <Info size={16} />
+                Details
+              </Button>
             </div>
+            {detailsOpen ? (
+              <Card className="step-meaning-card">
+                <CardHeader>
+                  <CardTitle>What this step means</CardTitle>
+                  <CardDescription>{clean(step.label)}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p>{clean(step.title)}</p>
+                  <p>{clean(step.note)}</p>
+                </CardContent>
+              </Card>
+            ) : null}
             <AttributeComparison title="Vehicle / System" attrs={path.vehicleAttrs} kind="vehicle" path={path} step={step} current={current} />
             <AttributeComparison title="Driver / Person" attrs={path.driverAttrs} kind="driver" path={path} step={step} current={current} />
           </div>
