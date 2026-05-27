@@ -359,7 +359,7 @@ body.sheet-open {
 }
 
 .editable-attribute-row {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
@@ -491,6 +491,42 @@ body.sheet-open {
   color: var(--brand);
   font-size: 0.82rem;
   white-space: nowrap;
+}
+
+.slider-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.slider-field .ui-slider {
+  grid-column: auto;
+}
+
+.metric-rating-pair {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+}
+
+.metric-rating-pair small,
+.metric-slider-row small {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.metric-slider-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.metric-slider-row .ui-slider {
+  grid-column: auto;
 }
 
 .timeline-list {
@@ -1212,7 +1248,7 @@ article.timeline-item {
 }
 
 .editable-attribute-row {
-  grid-template-columns: minmax(0, 1fr) auto minmax(72px, auto);
+  grid-template-columns: minmax(0, 1fr) auto auto minmax(72px, auto);
 }
 
 .icon-action {

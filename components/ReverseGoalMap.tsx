@@ -356,6 +356,7 @@ function StepSheet({
                 kind="vehicle"
                 busy={busy}
                 onRating={onRating}
+                onTargetRating={onSaveMetric}
                 onEdit={(attr, kind) => {
                   setSelectedMetric({ attr, kind });
                   setEditingMetric(true);
@@ -398,6 +399,7 @@ function StepSheet({
                 kind="driver"
                 busy={busy}
                 onRating={onRating}
+                onTargetRating={onSaveMetric}
                 onEdit={(attr, kind) => {
                   setSelectedMetric({ attr, kind });
                   setEditingMetric(true);
@@ -424,6 +426,7 @@ function MetricCard({
   kind,
   busy,
   onRating,
+  onTargetRating,
   onEdit,
   onDelete,
   onAdd,
@@ -435,6 +438,7 @@ function MetricCard({
   kind: AttrKind;
   busy: boolean;
   onRating: (attr: Attribute, value: number) => void;
+  onTargetRating: (attr: Attribute, kind: AttrKind, form: FormData) => void;
   onEdit: (attr: Attribute, kind: AttrKind) => void;
   onDelete: (attr: Attribute) => void;
   onAdd: (kind: AttrKind) => void;
@@ -476,11 +480,16 @@ function MetricCard({
             >
               <span>
                 <strong>{clean(attr.name)}</strong>
-                <small>
-                  {clean(attr.group)} target {ratingPercent(attr.final)}
-                </small>
+                <small>{clean(attr.group)}</small>
               </span>
-              <strong className="rating-value">{ratingPercent(currentValue(attr))}</strong>
+              <span className="metric-rating-pair">
+                <small>Current</small>
+                <strong className="rating-value">{ratingPercent(currentValue(attr))}</strong>
+              </span>
+              <span className="metric-rating-pair">
+                <small>Target</small>
+                <strong className="rating-value">{ratingPercent(attr.final)}</strong>
+              </span>
               <span className="row-actions">
                 <ActionButton title="Edit metric" disabled={busy} onClick={() => onEdit(attr, kind)}>
                   <Pencil size={16} />
@@ -489,14 +498,36 @@ function MetricCard({
                   <Trash2 size={16} />
                 </ActionButton>
               </span>
-              <Slider
-                min="0"
-                max="10"
-                step="1"
-                value={[currentValue(attr)]}
-                aria-label={`Current rating slider for ${clean(attr.name)}`}
-                onValueChange={([nextValue]) => onRating(attr, clamp(nextValue || 0, 0, 10))}
-              />
+              <span className="metric-slider-row">
+                <small>Current</small>
+                <Slider
+                  min="0"
+                  max="10"
+                  step="1"
+                  value={[currentValue(attr)]}
+                  aria-label={`Current rating slider for ${clean(attr.name)}`}
+                  onValueChange={([nextValue]) => onRating(attr, clamp(nextValue || 0, 0, 10))}
+                />
+              </span>
+              <span className="metric-slider-row">
+                <small>Target</small>
+                <Slider
+                  min="0"
+                  max="10"
+                  step="1"
+                  value={[clamp(attr.final, 0, 10)]}
+                  aria-label={`Target rating slider for ${clean(attr.name)}`}
+                  onValueChange={([nextValue]) => {
+                    const form = new FormData();
+                    form.set("name", attr.name);
+                    form.set("group", attr.group);
+                    form.set("final", String(clamp(nextValue || 0, 0, 10)));
+                    form.set("meaning", attr.meaning);
+                    form.set("build", buildText(attr.build));
+                    onTargetRating(attr, kind, form);
+                  }}
+                />
+              </span>
             </div>
           ))
         ) : (
@@ -670,6 +701,8 @@ function MetricEditForm({
   onCancel: () => void;
   onSave: (attr: Attribute, kind: AttrKind, form: FormData) => void;
 }) {
+  const [targetRating, setTargetRating] = useState(clamp(attr.final, 0, 10));
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSave(attr, kind, new FormData(event.currentTarget));
@@ -697,7 +730,18 @@ function MetricEditForm({
             </label>
             <label>
               Target rating
-              <input name="final" type="number" min="0" max="10" defaultValue={attr.final} />
+              <span className="slider-field">
+                <Slider
+                  name="final"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value={[targetRating]}
+                  aria-label={`Target rating slider for ${clean(attr.name)}`}
+                  onValueChange={([nextValue]) => setTargetRating(clamp(nextValue || 0, 0, 10))}
+                />
+                <strong className="rating-value">{ratingPercent(targetRating)}</strong>
+              </span>
             </label>
           </div>
           <label>
