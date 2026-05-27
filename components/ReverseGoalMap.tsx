@@ -1,7 +1,7 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -17,6 +17,7 @@ import {
   Save,
   Target,
   Trash2,
+  Upload,
   UserRound,
   X,
 } from "lucide-react";
@@ -815,6 +816,7 @@ export default function ReverseGoalMap() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const goal = useMemo(() => goals.find((item) => item.id === goalId) || goals[0], [goalId, goals]);
   const path = useMemo(() => goal?.paths.find((item) => item.id === pathId) || goal?.paths[0], [goal, pathId]);
@@ -857,6 +859,19 @@ export default function ReverseGoalMap() {
     } catch (error) {
       setBusy(false);
       alert(error instanceof Error ? error.message : "Something went wrong");
+    }
+  }
+
+  async function importJsonFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      const parsed = JSON.parse(await file.text()) as Goal | Goal[];
+      await safeMutate({ action: "importGoals", goals: parsed });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Could not import that JSON file");
     }
   }
 
@@ -957,52 +972,17 @@ export default function ReverseGoalMap() {
             ))}
           </Select>
         </label>
-      </section>
-
-      <section className="dashboard-summary">
-        <Card>
-          <CardHeader>
-            <div className="card-heading-row">
-              <div>
-                <CardTitle className="detail-card-title">
-                  <Database size={17} />
-                  {clean(goal.title)}
-                </CardTitle>
-                <CardDescription>{clean(path.name)}</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="summary-grid">
-            <div className="score-tile">
-              <span>Current step</span>
-              <strong>{currentStep ? clean(currentStep.label) : "Not set"}</strong>
-            </div>
-            <div className="score-tile">
-              <span>Roadmap progress</span>
-              <strong>
-                {currentStep ? `${goal.steps.findIndex((step) => step.id === currentStep.id) + 1}/${goal.steps.length}` : `0/${goal.steps.length}`}
-              </strong>
-            </div>
-            <div className="score-tile">
-              <span>Business avg</span>
-              <strong>{ratingPercent(averageCurrent(path.vehicleAttrs))}</strong>
-            </div>
-            <div className="score-tile">
-              <span>Person avg</span>
-              <strong>{ratingPercent(averageCurrent(path.driverAttrs))}</strong>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="control-actions">
+          <input ref={importInputRef} className="visually-hidden" type="file" accept="application/json,.json" onChange={importJsonFile} />
+          <Button variant="outline" type="button" disabled={busy} onClick={() => importInputRef.current?.click()}>
+            <Upload size={16} />
+            Import JSON
+          </Button>
+        </div>
       </section>
 
       <section className="workspace-grid workspace-grid-single">
         <section className="timeline-panel">
-          <div className="section-heading">
-            <div>
-              <h2>Roadmap steps</h2>
-              <p>Open a step to mark your current position.</p>
-            </div>
-          </div>
           <div className="timeline-list">
             {goal.steps.length ? (
               goal.steps.map((step, index) => (
