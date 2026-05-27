@@ -359,7 +359,7 @@ body.sheet-open {
 }
 
 .editable-attribute-row {
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
@@ -1248,7 +1248,7 @@ article.timeline-item {
 }
 
 .editable-attribute-row {
-  grid-template-columns: minmax(0, 1fr) auto auto minmax(72px, auto);
+  grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
 .icon-action {

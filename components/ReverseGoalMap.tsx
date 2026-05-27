@@ -357,11 +357,6 @@ function StepSheet({
                 busy={busy}
                 onRating={onRating}
                 onTargetRating={onSaveMetric}
-                onEdit={(attr, kind) => {
-                  setSelectedMetric({ attr, kind });
-                  setEditingMetric(true);
-                }}
-                onDelete={onDeleteMetric}
                 onAdd={onAddMetric}
                 onOpen={(metric) => {
                   setSelectedMetric(metric);
@@ -400,11 +395,6 @@ function StepSheet({
                 busy={busy}
                 onRating={onRating}
                 onTargetRating={onSaveMetric}
-                onEdit={(attr, kind) => {
-                  setSelectedMetric({ attr, kind });
-                  setEditingMetric(true);
-                }}
-                onDelete={onDeleteMetric}
                 onAdd={onAddMetric}
                 onOpen={(metric) => {
                   setSelectedMetric(metric);
@@ -427,8 +417,6 @@ function MetricCard({
   busy,
   onRating,
   onTargetRating,
-  onEdit,
-  onDelete,
   onAdd,
   onOpen,
 }: {
@@ -439,8 +427,6 @@ function MetricCard({
   busy: boolean;
   onRating: (attr: Attribute, value: number) => void;
   onTargetRating: (attr: Attribute, kind: AttrKind, form: FormData) => void;
-  onEdit: (attr: Attribute, kind: AttrKind) => void;
-  onDelete: (attr: Attribute) => void;
   onAdd: (kind: AttrKind) => void;
   onOpen: (selectedMetric: Exclude<SelectedMetric, null>) => void;
 }) {
@@ -489,14 +475,6 @@ function MetricCard({
               <span className="metric-rating-pair">
                 <small>Target</small>
                 <strong className="rating-value">{ratingPercent(attr.final)}</strong>
-              </span>
-              <span className="row-actions">
-                <ActionButton title="Edit metric" disabled={busy} onClick={() => onEdit(attr, kind)}>
-                  <Pencil size={16} />
-                </ActionButton>
-                <ActionButton title="Delete metric" disabled={busy} onClick={() => onDelete(attr)}>
-                  <Trash2 size={16} />
-                </ActionButton>
               </span>
               <span className="metric-slider-row">
                 <small>Current</small>
