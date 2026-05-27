@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Goal {
+  id       String        @id
+  title    String
+  position Int           @default(0)
+  steps    RoadmapStep[]
+  paths    GoalPath[]
+
+  @@map("goals")
+}
+
+model RoadmapStep {
+  id       String     @id
+  goalId   String     @map("goal_id")
+  label    String
+  title    String
+  meaning  String
+  build    String
+  factors  String
+  position Int        @default(0)
+  goal     Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  paths    GoalPath[] @relation("CurrentStep")
+
+  @@map("steps")
+}
+
+model GoalPath {
+  id            String       @id
+  goalId        String       @map("goal_id")
+  name          String
+  currentStepId String?      @map("current_step_id")
+  position      Int          @default(0)
+  goal          Goal         @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  currentStep   RoadmapStep? @relation("CurrentStep", fields: [currentStepId], references: [id], onDelete: SetNull)
+  metrics       Metric[]
+
+  @@map("paths")
+}
+
+model Metric {
+  id        String   @id
+  pathId    String   @map("path_id")
+  kind      String
+  name      String
+  final     Int      @default(10)
+  groupName String   @default("default") @map("group_name")
+  meaning   String
+  build     String
+  current   Int      @default(0)
+  position  Int      @default(0)
+  path      GoalPath @relation(fields: [pathId], references: [id], onDelete: Cascade)
+
+  @@map("metrics")
+}

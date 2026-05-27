@@ -1,34 +1,39 @@
 "use client";
 
+import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  ArrowLeft,
   BriefcaseBusiness,
-  ChevronRight,
+  CheckCircle2,
   CircleDollarSign,
+  Database,
   Gauge,
   HeartHandshake,
-  ListChecks,
-  Sparkles,
+  Loader2,
+  Pencil,
+  Plus,
+  Save,
   Target,
-  TriangleAlert,
+  Trash2,
   UserRound,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Select } from "@/components/ui/select";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
-import { DATA, attributeDetailContent, stepDetailContent } from "@/data/goals";
-import { avgRating, clamp, clean, currentAttrKey, currentGapClass, stepRating } from "@/lib/ratings";
+import { avgRating, clamp, clean, currentGapClass, stepRating } from "@/lib/ratings";
 import type { Attribute, Goal, Path, Step } from "@/lib/types";
 
 type AttrKind = "vehicle" | "driver";
-type CurrentRatings = Record<string, number>;
-type StepDetailView = "details" | "driver" | "vehicle" | "attribute";
-type SelectedAttribute = { attr: Attribute; kind: AttrKind } | null;
+type EditTarget =
+  | { type: "goal"; item: Goal }
+  | { type: "path"; item: Path }
+  | { type: "step"; item: Step }
+  | { type: "metric"; item: Attribute; kind: AttrKind }
+  | null;
 
 const goalIcons = {
   freedom10m: CircleDollarSign,
@@ -36,564 +41,308 @@ const goalIcons = {
   relationship: HeartHandshake,
 };
 
-function currentValue(current: CurrentRatings, path: Path, kind: AttrKind, attr: Attribute) {
-  return current[currentAttrKey(path, kind, attr)] ?? 0;
+function currentValue(attr: Attribute) {
+  return clamp(attr.current ?? 0, 0, 10);
 }
 
-function averageCurrent(current: CurrentRatings, path: Path, attrs: Attribute[], kind: AttrKind) {
+function averageCurrent(attrs: Attribute[]) {
   if (!attrs.length) return 0;
-  return Math.round(attrs.reduce((sum, attr) => sum + currentValue(current, path, kind, attr), 0) / attrs.length);
-}
-
-function gapLabel(gap: number) {
-  if (gap <= 0) return "Ready";
-  if (gap <= 2) return "Close";
-  return "Build";
-}
-
-function ScoreTile({
-  label,
-  value,
-  icon,
-  tone = "default",
-}: {
-  label: string;
-  value: string | number;
-  icon?: React.ReactNode;
-  tone?: "default" | "dark";
-}) {
-  return (
-    <div className={tone === "dark" ? "score-tile score-tile-dark" : "score-tile"}>
-      <span>
-        {icon}
-        {label}
-      </span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function AttributeEditor({
-  title,
-  icon,
-  attrs,
-  kind,
-  path,
-  current,
-  onChange,
-  onSelectAttribute,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  attrs: Attribute[];
-  kind: AttrKind;
-  path: Path;
-  current: CurrentRatings;
-  onChange: (key: string, value: number) => void;
-  onSelectAttribute: (selection: { attr: Attribute; kind: AttrKind }) => void;
-}) {
-  return (
-    <Card className="attribute-card">
-      <CardHeader>
-        <CardTitle className="attribute-title">
-          {icon}
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="attribute-list">
-        {attrs.map((attr) => {
-          const key = currentAttrKey(path, kind, attr);
-          const value = current[key] ?? 0;
-
-          return (
-            <div className="attribute-row" key={key}>
-              <span>
-                <strong>{clean(attr.name)}</strong>
-              </span>
-              <button className="attribute-info-button" type="button" aria-label={`Open details for ${clean(attr.name)}`} onClick={() => onSelectAttribute({ attr, kind })}>
-                <ChevronRight size={15} />
-              </button>
-              <strong className="rating-value">{ratingPercent(value)}</strong>
-              <Slider
-                min="0"
-                max="10"
-                step="1"
-                value={[value]}
-                aria-label={`Current rating slider for ${clean(attr.name)}`}
-                onValueChange={([nextValue]) => onChange(key, clamp(nextValue || 0, 0, 10))}
-              />
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
-  );
-}
-
-function readinessPercent(currentValue: number, requiredValue: number) {
-  if (requiredValue <= 0) return 100;
-  return clamp(Math.round((currentValue / requiredValue) * 100), 0, 100);
+  return Math.round(attrs.reduce((sum, attr) => sum + currentValue(attr), 0) / attrs.length);
 }
 
 function ratingPercent(value: number) {
   return `${clamp(value, 0, 10) * 10}%`;
 }
 
-function gapPercent(value: number) {
-  return `${clamp(Math.ceil(value), 0, 10) * 10}%`;
+function buildText(items: string[]) {
+  return items.join("\n");
 }
 
-function matrixLabel(kind: AttrKind) {
-  return kind === "vehicle" ? "Business" : "Person";
+function linesFromForm(form: FormData, name: string) {
+  return String(form.get(name) || "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
-function StepStats({
-  path,
-  step,
-  current,
-}: {
-  path: Path;
-  step: Step;
-  current: CurrentRatings;
-}) {
-  const vehicleRequired = avgRating(path.vehicleAttrs, step);
-  const driverRequired = avgRating(path.driverAttrs, step);
-  const vehicleCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
-  const driverCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
-  const businessPercent = readinessPercent(vehicleCurrent, vehicleRequired);
-  const personPercent = readinessPercent(driverCurrent, driverRequired);
-  const readinessGapPercent = clamp(100 - Math.round((businessPercent + personPercent) / 2), 0, 100);
-
-  return (
-    <div className="step-stats">
-      <ScoreTile
-        label="Business"
-        value={`${businessPercent}%`}
-        icon={<BriefcaseBusiness size={13} />}
-      />
-      <ScoreTile
-        label="Person"
-        value={`${personPercent}%`}
-        icon={<UserRound size={13} />}
-      />
-      <ScoreTile
-        label="Gap"
-        value={`${readinessGapPercent}%`}
-        icon={<TriangleAlert size={13} />}
-        tone="dark"
-      />
-    </div>
-  );
+function parseFactors(value: FormDataEntryValue | null) {
+  try {
+    const parsed = JSON.parse(String(value || "{}"));
+    return parsed && typeof parsed === "object" ? parsed : { default: 0 };
+  } catch {
+    return { default: 0 };
+  }
 }
 
-function StepButton({
-  path,
-  step,
-  number,
-  current,
-  active,
+function ActionButton({
+  children,
+  disabled,
   onClick,
+  title,
 }: {
-  path: Path;
-  step: Step;
-  number: number;
-  current: CurrentRatings;
-  active: boolean;
+  children: ReactNode;
+  disabled?: boolean;
   onClick: () => void;
+  title: string;
 }) {
-  const vehicleGap = avgRating(path.vehicleAttrs, step) - averageCurrent(current, path, path.vehicleAttrs, "vehicle");
-  const driverGap = avgRating(path.driverAttrs, step) - averageCurrent(current, path, path.driverAttrs, "driver");
-  const status = gapLabel(Math.max(vehicleGap, driverGap));
-
   return (
-    <button className={active ? "timeline-item is-active" : "timeline-item"} type="button" onClick={onClick}>
-      <span className="timeline-index">{number}</span>
-      <span className="timeline-main">
-        <span className="timeline-meta">
-          <span className={`gap-pill ${currentGapClass(Math.max(vehicleGap, driverGap))}`}>{status}</span>
-          {step.label === "End Goal" ? <span className="end-goal-badge">End Goal</span> : null}
-        </span>
-        <strong>{clean(step.title)}</strong>
-      </span>
-      <StepStats path={path} step={step} current={current} />
-      <ChevronRight className="timeline-arrow" size={18} />
+    <button
+      className="icon-action"
+      type="button"
+      disabled={disabled}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      title={title}
+      aria-label={title}
+    >
+      {children}
     </button>
   );
 }
 
-function AttributeComparison({
-  title,
-  attrs,
-  kind,
-  path,
-  step,
-  current,
-  onSelectAttribute,
-}: {
-  title: string;
-  attrs: Attribute[];
-  kind: AttrKind;
-  path: Path;
-  step: Step;
-  current: CurrentRatings;
-  onSelectAttribute: (selection: { attr: Attribute; kind: AttrKind }) => void;
-}) {
-  const sortedAttrs = useMemo(
-    () =>
-      [...attrs].sort((a, b) => {
-        const gapA = stepRating(a, step) - currentValue(current, path, kind, a);
-        const gapB = stepRating(b, step) - currentValue(current, path, kind, b);
-        return gapB - gapA;
-      }),
-    [attrs, current, kind, path, step],
-  );
-
+function EmptyState({ title, description }: { title: string; description: string }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent className="comparison-list">
-        {sortedAttrs.map((attr) => {
-          const required = stepRating(attr, step);
-          const now = currentValue(current, path, kind, attr);
-          const gap = required - now;
-
-          return (
-            <button className="comparison-row" type="button" key={`${kind}-${attr.name}`} onClick={() => onSelectAttribute({ attr, kind })}>
-              <div>
-                <strong>{clean(attr.name)}</strong>
-              </div>
-              <div className="comparison-bars">
-                <span>Current {ratingPercent(now)}</span>
-                <Progress value={now} indicatorClassName="progress-current" />
-                <span>Target {ratingPercent(required)}</span>
-                <Progress value={required} />
-              </div>
-              <span className={`gap-pill ${currentGapClass(gap)}`}>{gapPercent(gap)}</span>
-              <ChevronRight className="comparison-arrow" size={16} />
-            </button>
-          );
-        })}
-      </CardContent>
     </Card>
   );
 }
 
-function AttributeOverview({
-  selection,
-  path,
+function StepStats({ path, step }: { path: Path; step: Step }) {
+  const vehicleRequired = avgRating(path.vehicleAttrs, step);
+  const driverRequired = avgRating(path.driverAttrs, step);
+  const vehicleCurrent = averageCurrent(path.vehicleAttrs);
+  const driverCurrent = averageCurrent(path.driverAttrs);
+  const businessPercent = vehicleRequired <= 0 ? 100 : clamp(Math.round((vehicleCurrent / vehicleRequired) * 100), 0, 100);
+  const personPercent = driverRequired <= 0 ? 100 : clamp(Math.round((driverCurrent / driverRequired) * 100), 0, 100);
+  const readinessGapPercent = clamp(100 - Math.round((businessPercent + personPercent) / 2), 0, 100);
+
+  return (
+    <div className="step-stats">
+      <div className="score-tile">
+        <span>
+          <BriefcaseBusiness size={13} />
+          Business
+        </span>
+        <strong>{businessPercent}%</strong>
+      </div>
+      <div className="score-tile">
+        <span>
+          <UserRound size={13} />
+          Person
+        </span>
+        <strong>{personPercent}%</strong>
+      </div>
+      <div className="score-tile score-tile-dark">
+        <span>
+          <Gauge size={13} />
+          Gap
+        </span>
+        <strong>{readinessGapPercent}%</strong>
+      </div>
+    </div>
+  );
+}
+
+function StepCard({
   step,
-  current,
-  onBack,
-}: {
-  selection: { attr: Attribute; kind: AttrKind };
-  path: Path;
-  step: Step;
-  current: CurrentRatings;
-  onBack: () => void;
-}) {
-  const { attr, kind } = selection;
-  const required = stepRating(attr, step);
-  const now = currentValue(current, path, kind, attr);
-  const gap = required - now;
-  const label = matrixLabel(kind);
-  const details = attributeDetailContent(attr, kind, path, step);
-
-  return (
-    <div className="attribute-overview">
-      <Button className="back-button" variant="outline" type="button" onClick={onBack}>
-        <ArrowLeft size={16} />
-        Back to {label} matrix
-      </Button>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="detail-card-title">
-            {kind === "vehicle" ? <BriefcaseBusiness size={16} /> : <UserRound size={16} />}
-            {clean(attr.name)}
-          </CardTitle>
-          <CardDescription>{label} attribute</CardDescription>
-        </CardHeader>
-        <CardContent className="attribute-overview-content">
-          <div className="attribute-meter-grid">
-            <ScoreTile label="Current" value={ratingPercent(now)} />
-            <ScoreTile label="Target" value={ratingPercent(required)} />
-            <ScoreTile label="Gap" value={gapPercent(gap)} tone="dark" />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="details-grid">
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <ListChecks size={16} />
-              Meaning
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{details.meaning}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <Sparkles size={16} />
-              How to build it
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="action-list">
-              {details.build.map((item) => (
-                <li key={item}>{clean(item)}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-      </div>
-    </div>
-  );
-}
-
-function CurrentAttributeOverview({
-  selection,
   path,
+  number,
   current,
-  onBack,
+  busy,
+  onEdit,
+  onDelete,
+  onProgress,
+  onOpen,
 }: {
-  selection: { attr: Attribute; kind: AttrKind };
+  step: Step;
   path: Path;
-  current: CurrentRatings;
-  onBack: () => void;
+  number: number;
+  current: boolean;
+  busy: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onProgress: () => void;
+  onOpen: () => void;
 }) {
-  const { attr, kind } = selection;
-  const now = currentValue(current, path, kind, attr);
-  const target = attr.final;
-  const gap = target - now;
-  const label = matrixLabel(kind);
-  const details = attributeDetailContent(attr, kind, path);
+  const vehicleGap = avgRating(path.vehicleAttrs, step) - averageCurrent(path.vehicleAttrs);
+  const driverGap = avgRating(path.driverAttrs, step) - averageCurrent(path.driverAttrs);
+  const gap = Math.max(vehicleGap, driverGap);
+  const status = gap <= 0 ? "Ready" : gap <= 2 ? "Close" : "Build";
 
   return (
-    <div className="attribute-overview">
-      <Button className="back-button" variant="outline" type="button" onClick={onBack}>
-        <ArrowLeft size={16} />
-        Back to ratings
-      </Button>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="detail-card-title">
-            {kind === "vehicle" ? <BriefcaseBusiness size={16} /> : <UserRound size={16} />}
-            {clean(attr.name)}
-          </CardTitle>
-          <CardDescription>{label} rating</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="attribute-meter-grid">
-            <ScoreTile label="Current" value={ratingPercent(now)} />
-            <ScoreTile label="Target" value={ratingPercent(target)} />
-            <ScoreTile label="Gap" value={gapPercent(gap)} tone="dark" />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="details-grid">
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <ListChecks size={16} />
-              Meaning
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{details.meaning}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <Sparkles size={16} />
-              How to build it
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="action-list">
-              {details.build.map((item) => (
-                <li key={item}>{clean(item)}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
+    <article className={current ? "timeline-item progress-current-step" : "timeline-item"} onClick={onOpen}>
+      <span className="timeline-index">{number}</span>
+      <span className="timeline-main">
+        <span className="timeline-meta">
+          <span className={`gap-pill ${currentGapClass(gap)}`}>{status}</span>
+          {current ? <span className="end-goal-badge">Current step</span> : null}
+        </span>
+        <strong>{clean(step.title)}</strong>
+        <small>{clean(step.label)}</small>
+      </span>
+      <StepStats path={path} step={step} />
+      <span className="row-actions">
+        <ActionButton title="Mark current step" disabled={busy} onClick={onProgress}>
+          <CheckCircle2 size={16} />
+        </ActionButton>
+        <ActionButton title="Edit step" disabled={busy} onClick={onEdit}>
+          <Pencil size={16} />
+        </ActionButton>
+        <ActionButton title="Delete step" disabled={busy} onClick={onDelete}>
+          <Trash2 size={16} />
+        </ActionButton>
+      </span>
+      <div className="timeline-details">
+        <p>{clean(step.meaning)}</p>
+        {step.build.length ? (
+          <ul className="action-list">
+            {step.build.map((item) => (
+              <li key={item}>{clean(item)}</li>
+            ))}
+          </ul>
+        ) : null}
       </div>
-    </div>
+    </article>
   );
 }
 
-function StepMeaningDetails({ goal, path, step, current }: { goal: Goal; path: Path; step: Step; current: CurrentRatings }) {
-  const businessRequired = avgRating(path.vehicleAttrs, step);
-  const personRequired = avgRating(path.driverAttrs, step);
-  const businessCurrent = averageCurrent(current, path, path.vehicleAttrs, "vehicle");
-  const personCurrent = averageCurrent(current, path, path.driverAttrs, "driver");
-  const businessGap = Math.max(0, Math.ceil(businessRequired - businessCurrent));
-  const personGap = Math.max(0, Math.ceil(personRequired - personCurrent));
-  const details = stepDetailContent(goal, path, step);
-
-  return (
-    <div className="details-stack">
-      <Card className="step-meaning-card">
-        <CardHeader>
-          <CardTitle>{clean(step.title)}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <StepStats path={path} step={step} current={current} />
-        </CardContent>
-      </Card>
-
-      <div className="details-grid">
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <ListChecks size={16} />
-              Meaning
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{details.meaning}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="detail-card-title">
-              <Sparkles size={16} />
-              How to build it
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="action-list">
-              {details.build.map((item) => (
-                <li key={item}>{clean(item)}</li>
-              ))}
-              <li>
-                Current gap: Business <strong>{gapPercent(businessGap)}</strong>, Person{" "}
-                <strong>{gapPercent(personGap)}</strong>. Start with the larger gap.
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function StepDetails({
+function StepSheet({
   open,
+  step,
   goal,
   path,
-  step,
-  current,
+  busy,
   onClose,
+  onEditStep,
+  onSetProgress,
+  onRating,
+  onEditMetric,
+  onDeleteMetric,
+  onAddMetric,
 }: {
   open: boolean;
+  step: Step | null;
   goal: Goal;
   path: Path;
-  step: Step | null;
-  current: CurrentRatings;
+  busy: boolean;
   onClose: () => void;
+  onEditStep: (step: Step) => void;
+  onSetProgress: (step: Step) => void;
+  onRating: (attr: Attribute, value: number) => void;
+  onEditMetric: (attr: Attribute, kind: AttrKind) => void;
+  onDeleteMetric: (attr: Attribute) => void;
+  onAddMetric: (kind: AttrKind) => void;
 }) {
-  const [view, setView] = useState<StepDetailView>("details");
-  const [selectedAttribute, setSelectedAttribute] = useState<SelectedAttribute>(null);
+  const [view, setView] = useState<"details" | "business" | "person">("details");
 
   useEffect(() => {
-    setView("details");
-    setSelectedAttribute(null);
-  }, [step]);
+    if (open) setView("details");
+  }, [open, step?.id]);
 
   return (
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
       <SheetContent className="step-detail-sheet" onClose={onClose}>
         {step ? (
           <div className="sheet-scroll">
-            <div className="detail-heading">
+            <div className="detail-heading step-sheet-heading">
+              <div>
+                <p>{clean(goal.title)} / {clean(path.name)}</p>
+                <h2>{clean(step.title)}</h2>
+              </div>
               <div className="sheet-view-switcher" aria-label="Step detail view">
-                <Button
-                  variant={view === "details" ? "default" : "outline"}
-                  type="button"
-                  onClick={() => {
-                    setSelectedAttribute(null);
-                    setView("details");
-                  }}
-                >
-                  <ListChecks size={16} />
+                <Button variant={view === "details" ? "default" : "outline"} type="button" onClick={() => setView("details")}>
                   Details
                 </Button>
-                <Button
-                  variant={view === "driver" || (view === "attribute" && selectedAttribute?.kind === "driver") ? "default" : "outline"}
-                  type="button"
-                  onClick={() => {
-                    setSelectedAttribute(null);
-                    setView("driver");
-                  }}
-                >
-                  <UserRound size={16} />
-                  Person
-                </Button>
-                <Button
-                  variant={view === "vehicle" || (view === "attribute" && selectedAttribute?.kind === "vehicle") ? "default" : "outline"}
-                  type="button"
-                  onClick={() => {
-                    setSelectedAttribute(null);
-                    setView("vehicle");
-                  }}
-                >
+                <Button variant={view === "business" ? "default" : "outline"} type="button" onClick={() => setView("business")}>
                   <BriefcaseBusiness size={16} />
                   Business
                 </Button>
+                <Button variant={view === "person" ? "default" : "outline"} type="button" onClick={() => setView("person")}>
+                  <UserRound size={16} />
+                  Person
+                </Button>
               </div>
             </div>
+
             {view === "details" ? (
-              <StepMeaningDetails goal={goal} path={path} step={step} current={current} />
+              <div className="details-stack">
+                <Card>
+                  <CardHeader>
+                    <div className="card-heading-row">
+                      <CardTitle>{clean(step.label)}</CardTitle>
+                      <span className="row-actions">
+                        <Button variant="outline" type="button" disabled={busy} onClick={() => onSetProgress(step)}>
+                          <CheckCircle2 size={16} />
+                          Current
+                        </Button>
+                        <Button variant="outline" type="button" disabled={busy} onClick={() => onEditStep(step)}>
+                          <Pencil size={16} />
+                          Edit
+                        </Button>
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <StepStats path={path} step={step} />
+                  </CardContent>
+                </Card>
+
+                <div className="details-grid">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="detail-card-title">Meaning</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p>{clean(step.meaning)}</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="detail-card-title">How to build it</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="action-list">
+                        {step.build.map((item) => (
+                          <li key={item}>{clean(item)}</li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             ) : null}
-            {view === "driver" ? (
-              <AttributeComparison
-                title="Person matrix"
-                attrs={path.driverAttrs}
-                kind="driver"
-                path={path}
-                step={step}
-                current={current}
-                onSelectAttribute={(selection) => {
-                  setSelectedAttribute(selection);
-                  setView("attribute");
-                }}
-              />
-            ) : null}
-            {view === "vehicle" ? (
-              <AttributeComparison
-                title="Business matrix"
+
+            {view === "business" ? (
+              <MetricCard
+                title="Business Matrix"
+                icon={<BriefcaseBusiness size={17} />}
                 attrs={path.vehicleAttrs}
                 kind="vehicle"
-                path={path}
-                step={step}
-                current={current}
-                onSelectAttribute={(selection) => {
-                  setSelectedAttribute(selection);
-                  setView("attribute");
-                }}
+                busy={busy}
+                onRating={onRating}
+                onEdit={onEditMetric}
+                onDelete={onDeleteMetric}
+                onAdd={onAddMetric}
               />
             ) : null}
-            {view === "attribute" && selectedAttribute ? (
-              <AttributeOverview
-                selection={selectedAttribute}
-                path={path}
-                step={step}
-                current={current}
-                onBack={() => setView(selectedAttribute.kind)}
+
+            {view === "person" ? (
+              <MetricCard
+                title="Person Matrix"
+                icon={<UserRound size={17} />}
+                attrs={path.driverAttrs}
+                kind="driver"
+                busy={busy}
+                onRating={onRating}
+                onEdit={onEditMetric}
+                onDelete={onDeleteMetric}
+                onAdd={onAddMetric}
               />
             ) : null}
           </div>
@@ -603,122 +352,343 @@ function StepDetails({
   );
 }
 
-function CurrentRatingSheet({
-  open,
-  path,
-  current,
-  onChange,
-  onClose,
+function MetricCard({
+  title,
+  icon,
+  attrs,
+  kind,
+  busy,
+  onRating,
+  onEdit,
+  onDelete,
+  onAdd,
 }: {
-  open: boolean;
-  path: Path;
-  current: CurrentRatings;
-  onChange: (key: string, value: number) => void;
-  onClose: () => void;
+  title: string;
+  icon: ReactNode;
+  attrs: Attribute[];
+  kind: AttrKind;
+  busy: boolean;
+  onRating: (attr: Attribute, value: number) => void;
+  onEdit: (attr: Attribute, kind: AttrKind) => void;
+  onDelete: (attr: Attribute) => void;
+  onAdd: (kind: AttrKind) => void;
 }) {
-  const [selectedAttribute, setSelectedAttribute] = useState<SelectedAttribute>(null);
+  return (
+    <Card className="attribute-card">
+      <CardHeader>
+        <div className="card-heading-row">
+          <CardTitle className="attribute-title">
+            {icon}
+            {title}
+          </CardTitle>
+          <Button variant="outline" type="button" disabled={busy} onClick={() => onAdd(kind)}>
+            <Plus size={16} />
+            Add
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="attribute-list">
+        {attrs.length ? (
+          attrs.map((attr) => (
+            <div className="attribute-row editable-attribute-row" key={attr.id || attr.name}>
+              <span>
+                <strong>{clean(attr.name)}</strong>
+                <small>
+                  {clean(attr.group)} target {ratingPercent(attr.final)}
+                </small>
+              </span>
+              <strong className="rating-value">{ratingPercent(currentValue(attr))}</strong>
+              <span className="row-actions">
+                <ActionButton title="Edit metric" disabled={busy} onClick={() => onEdit(attr, kind)}>
+                  <Pencil size={16} />
+                </ActionButton>
+                <ActionButton title="Delete metric" disabled={busy} onClick={() => onDelete(attr)}>
+                  <Trash2 size={16} />
+                </ActionButton>
+              </span>
+              <Slider
+                min="0"
+                max="10"
+                step="1"
+                value={[currentValue(attr)]}
+                aria-label={`Current rating slider for ${clean(attr.name)}`}
+                onValueChange={([nextValue]) => onRating(attr, clamp(nextValue || 0, 0, 10))}
+              />
+              <p>{clean(attr.meaning)}</p>
+            </div>
+          ))
+        ) : (
+          <p className="muted-text">No metrics yet.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-  useEffect(() => {
-    if (!open) setSelectedAttribute(null);
-  }, [open, path]);
+function EditorPanel({
+  target,
+  goal,
+  path,
+  onClose,
+  onSubmit,
+}: {
+  target: EditTarget;
+  goal: Goal;
+  path: Path;
+  onClose: () => void;
+  onSubmit: (form: FormData, target: EditTarget) => void;
+}) {
+  if (!target) return null;
+
+  const isNew = target.type === "step" && !target.item.id;
+  const title =
+    target.type === "goal"
+      ? "Edit goal"
+      : target.type === "path"
+        ? "Edit roadmap"
+        : target.type === "step"
+          ? isNew
+            ? "Add step"
+            : "Edit step"
+          : target.item.id
+            ? `Edit ${target.kind === "vehicle" ? "business" : "person"} metric`
+            : `Add ${target.kind === "vehicle" ? "business" : "person"} metric`;
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSubmit(new FormData(event.currentTarget), target);
+  }
 
   return (
-    <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
-      <SheetContent className="current-rating-sheet" onClose={onClose}>
-        <div className="sheet-scroll">
-          {selectedAttribute ? (
-            <CurrentAttributeOverview selection={selectedAttribute} path={path} current={current} onBack={() => setSelectedAttribute(null)} />
-          ) : (
-            <div className="rating-grid">
-              <AttributeEditor
-                title="Business rating"
-                icon={<BriefcaseBusiness size={17} />}
-                attrs={path.vehicleAttrs}
-                kind="vehicle"
-                path={path}
-                current={current}
-                onChange={onChange}
-                onSelectAttribute={setSelectedAttribute}
-              />
-              <AttributeEditor
-                title="Person rating"
-                icon={<UserRound size={17} />}
-                attrs={path.driverAttrs}
-                kind="driver"
-                path={path}
-                current={current}
-                onChange={onChange}
-                onSelectAttribute={setSelectedAttribute}
-              />
-            </div>
-          )}
+    <section className="editor-panel" aria-label={title}>
+      <form className="editor-form" onSubmit={submit}>
+        <div className="editor-header">
+          <div>
+            <strong>{title}</strong>
+            <span>{clean(goal.title)} / {clean(path.name)}</span>
+          </div>
+          <button className="icon-action" type="button" onClick={onClose} aria-label="Close editor">
+            <X size={16} />
+          </button>
         </div>
-      </SheetContent>
-    </Sheet>
+
+        {target.type === "goal" ? (
+          <label>
+            Goal name
+            <input name="title" defaultValue={target.item.title} />
+          </label>
+        ) : null}
+
+        {target.type === "path" ? (
+          <label>
+            Roadmap name
+            <input name="name" defaultValue={target.item.name} />
+          </label>
+        ) : null}
+
+        {target.type === "step" ? (
+          <>
+            <label>
+              Step name
+              <input name="title" defaultValue={target.item.title} />
+            </label>
+            <label>
+              Short label
+              <input name="label" defaultValue={target.item.label} />
+            </label>
+            <label>
+              Meaning / explanation
+              <textarea name="meaning" rows={4} defaultValue={target.item.meaning} />
+            </label>
+            <label>
+              How to build or achieve it
+              <textarea name="build" rows={5} defaultValue={buildText(target.item.build)} />
+            </label>
+            <label>
+              Rating factors JSON
+              <textarea name="factors" rows={4} defaultValue={JSON.stringify(target.item.factors, null, 2)} />
+            </label>
+          </>
+        ) : null}
+
+        {target.type === "metric" ? (
+          <>
+            <label>
+              Metric name
+              <input name="name" defaultValue={target.item.name} />
+            </label>
+            <div className="editor-two-col">
+              <label>
+                Group
+                <input name="group" defaultValue={target.item.group} />
+              </label>
+              <label>
+                Target rating
+                <input name="final" type="number" min="0" max="10" defaultValue={target.item.final} />
+              </label>
+            </div>
+            <label>
+              Meaning / explanation
+              <textarea name="meaning" rows={4} defaultValue={target.item.meaning} />
+            </label>
+            <label>
+              How to build or achieve it
+              <textarea name="build" rows={5} defaultValue={buildText(target.item.build)} />
+            </label>
+          </>
+        ) : null}
+
+        <div className="editor-actions">
+          <Button type="submit">
+            <Save size={16} />
+            Save
+          </Button>
+          <Button variant="outline" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </section>
   );
 }
 
 export default function ReverseGoalMap() {
-  const [goalId, setGoalId] = useState(DATA[0].id);
-  const goal = useMemo(() => DATA.find((item) => item.id === goalId) || DATA[0], [goalId]);
-  const [pathIndex, setPathIndex] = useState(0);
-  const path = goal.paths[pathIndex] || goal.paths[0];
-  const [current, setCurrent] = useState<CurrentRatings>({});
-  const [currentRatingOpen, setCurrentRatingOpen] = useState(false);
-  const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
-  const GoalIcon = goalIcons[goal.id as keyof typeof goalIcons] || Target;
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goalId, setGoalId] = useState("");
+  const [pathId, setPathId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [editTarget, setEditTarget] = useState<EditTarget>(null);
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const nextGoal = params.get("goal");
-    const initialGoal = DATA.find((item) => item.id === nextGoal) || DATA[0];
+  const goal = useMemo(() => goals.find((item) => item.id === goalId) || goals[0], [goalId, goals]);
+  const path = useMemo(() => goal?.paths.find((item) => item.id === pathId) || goal?.paths[0], [goal, pathId]);
+  const currentStep = useMemo(() => goal?.steps.find((step) => step.id === path?.currentStepId) || null, [goal, path]);
+  const selectedStep = useMemo(() => goal?.steps.find((step) => step.id === selectedStepId) || null, [goal, selectedStepId]);
+  const GoalIcon = goal ? goalIcons[goal.id as keyof typeof goalIcons] || Target : Target;
 
-    if (nextGoal && initialGoal.id === nextGoal) setGoalId(nextGoal);
-    if (params.has("path")) setPathIndex(clamp(Number(params.get("path") || 0), 0, initialGoal.paths.length - 1));
-    if (params.has("step")) setSelectedStepIndex(clamp(Number(params.get("step") || 0), 0, initialGoal.steps.length - 1));
-  }, []);
-
-  useEffect(() => {
-    const next: CurrentRatings = {};
-    [...path.vehicleAttrs.map((attr) => currentAttrKey(path, "vehicle", attr)), ...path.driverAttrs.map((attr) => currentAttrKey(path, "driver", attr))].forEach((key) => {
-      const saved = localStorage.getItem(key);
-      if (saved !== null) next[key] = clamp(Number(saved), 0, 10);
+  const load = useCallback(async () => {
+    const response = await fetch("/api/dashboard", { cache: "no-store" });
+    const data = (await response.json()) as { goals: Goal[] };
+    setGoals(data.goals);
+    setGoalId((previous) => (data.goals.some((item) => item.id === previous) ? previous : data.goals[0]?.id || ""));
+    setPathId((previous) => {
+      const selectedGoal = data.goals.find((item) => item.id === goalId) || data.goals[0];
+      return selectedGoal?.paths.some((item) => item.id === previous) ? previous : selectedGoal?.paths[0]?.id || "";
     });
-    setCurrent(next);
-  }, [path]);
+    setLoading(false);
+  }, [goalId]);
 
-  const updateUrl = useCallback(
-    (step: number | null) => {
-      const url = new URL(window.location.href);
-      url.searchParams.set("goal", goal.id);
-      url.searchParams.set("path", String(pathIndex));
-      if (step === null) url.searchParams.delete("step");
-      else url.searchParams.set("step", String(step));
-      history.replaceState(null, "", url);
-    },
-    [goal.id, pathIndex],
-  );
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const selectedStep = selectedStepIndex === null ? null : goal.steps[selectedStepIndex] || null;
-
-  function updateCurrent(key: string, value: number) {
-    localStorage.setItem(key, String(value));
-    setCurrent((previous) => ({ ...previous, [key]: value }));
+  async function mutate(body: Record<string, unknown>) {
+    setBusy(true);
+    const response = await fetch("/api/dashboard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = (await response.json()) as { goals?: Goal[]; error?: string };
+    if (!response.ok) throw new Error(data.error || "Database update failed");
+    setGoals(data.goals || []);
+    setEditTarget(null);
+    setBusy(false);
   }
 
-  function changeGoal(nextGoalId: string) {
-    setGoalId(nextGoalId);
-    setPathIndex(0);
-    setSelectedStepIndex(null);
+  async function safeMutate(body: Record<string, unknown>) {
+    try {
+      await mutate(body);
+    } catch (error) {
+      setBusy(false);
+      alert(error instanceof Error ? error.message : "Something went wrong");
+    }
+  }
+
+  function submitEditor(form: FormData, target: EditTarget) {
+    if (!target || !goal || !path) return;
+
+    if (target.type === "goal") {
+      safeMutate({ action: "updateGoal", id: target.item.id, title: form.get("title") });
+    } else if (target.type === "path") {
+      safeMutate({ action: "updatePath", id: target.item.id, name: form.get("name") });
+    } else if (target.type === "step") {
+      safeMutate({
+        action: target.item.id ? "updateStep" : "createStep",
+        id: target.item.id,
+        goalId: goal.id,
+        label: form.get("label"),
+        title: form.get("title"),
+        meaning: form.get("meaning"),
+        build: linesFromForm(form, "build"),
+        factors: parseFactors(form.get("factors")),
+      });
+    } else {
+      safeMutate({
+        action: target.item.id ? "updateMetric" : "createMetric",
+        id: target.item.id,
+        pathId: path.id,
+        kind: target.kind,
+        name: form.get("name"),
+        final: form.get("final"),
+        group: form.get("group"),
+        meaning: form.get("meaning"),
+        build: linesFromForm(form, "build"),
+      });
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="app-shell loading-state">
+        <Loader2 className="spin" size={24} />
+        Loading database...
+      </main>
+    );
+  }
+
+  if (!goal) {
+    return (
+      <main className="app-shell">
+        <EmptyState title="No database content yet" description="Create a goal to start building your editable dashboard." />
+        <Button type="button" onClick={() => safeMutate({ action: "createGoal", title: "New Goal" })}>
+          <Plus size={16} />
+          Add goal
+        </Button>
+      </main>
+    );
+  }
+
+  if (!path) {
+    return (
+      <main className="app-shell">
+        <EmptyState title={clean(goal.title)} description="This goal has no roadmap yet. Add one to manage steps and matrices." />
+        <Button type="button" onClick={() => safeMutate({ action: "createPath", goalId: goal.id, name: "Default Roadmap" })}>
+          <Plus size={16} />
+          Add roadmap
+        </Button>
+      </main>
+    );
   }
 
   return (
     <main className="app-shell">
-      <section className="control-bar" aria-label="Map filters">
+      <section className="control-bar dynamic-control-bar" aria-label="Map filters">
         <label>
           <Target size={16} />
-          <Select aria-label="Select goal" value={goal.id} onChange={(event) => changeGoal(event.target.value)}>
-            {DATA.map((item) => (
+          <Select
+            aria-label="Select goal"
+            value={goal.id}
+            onChange={(event) => {
+              const nextGoal = goals.find((item) => item.id === event.target.value);
+              setGoalId(event.target.value);
+              setPathId(nextGoal?.paths[0]?.id || "");
+              setSelectedStepId(null);
+              setEditTarget(null);
+            }}
+          >
+            {goals.map((item) => (
               <option value={item.id} key={item.id}>
                 {clean(item.title)}
               </option>
@@ -728,64 +698,157 @@ export default function ReverseGoalMap() {
         <label>
           <GoalIcon size={16} />
           <Select
-            aria-label="Select path"
-            value={pathIndex}
+            aria-label="Select roadmap"
+            value={path.id}
             onChange={(event) => {
-              setPathIndex(Number(event.target.value));
-              setSelectedStepIndex(null);
+              setPathId(event.target.value);
+              setSelectedStepId(null);
             }}
           >
-            {goal.paths.map((item, index) => (
-              <option value={index} key={item.name}>
+            {goal.paths.map((item) => (
+              <option value={item.id} key={item.id}>
                 {clean(item.name)}
               </option>
             ))}
           </Select>
         </label>
-        <Button className="current-rating-trigger" type="button" onClick={() => setCurrentRatingOpen(true)}>
-          <Gauge size={16} />
-          Current rating
-        </Button>
+        <div className="control-actions">
+          <Button variant="outline" type="button" disabled={busy} onClick={() => safeMutate({ action: "createGoal", title: "New Goal" })}>
+            <Plus size={16} />
+            Goal
+          </Button>
+          <Button variant="outline" type="button" disabled={busy} onClick={() => safeMutate({ action: "createPath", goalId: goal.id, name: "New Roadmap" })}>
+            <Plus size={16} />
+            Roadmap
+          </Button>
+        </div>
       </section>
+
+      <section className="dashboard-summary">
+        <Card>
+          <CardHeader>
+            <div className="card-heading-row">
+              <div>
+                <CardTitle className="detail-card-title">
+                  <Database size={17} />
+                  {clean(goal.title)}
+                </CardTitle>
+                <CardDescription>{clean(path.name)}</CardDescription>
+              </div>
+              <span className="row-actions">
+                <ActionButton title="Edit goal" disabled={busy} onClick={() => setEditTarget({ type: "goal", item: goal })}>
+                  <Pencil size={16} />
+                </ActionButton>
+                <ActionButton title="Edit roadmap" disabled={busy} onClick={() => setEditTarget({ type: "path", item: path })}>
+                  <Pencil size={16} />
+                </ActionButton>
+                <ActionButton title="Delete roadmap" disabled={busy} onClick={() => safeMutate({ action: "deletePath", id: path.id })}>
+                  <Trash2 size={16} />
+                </ActionButton>
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="summary-grid">
+            <div className="score-tile">
+              <span>Current step</span>
+              <strong>{currentStep ? clean(currentStep.label) : "Not set"}</strong>
+            </div>
+            <div className="score-tile">
+              <span>Roadmap progress</span>
+              <strong>
+                {currentStep ? `${goal.steps.findIndex((step) => step.id === currentStep.id) + 1}/${goal.steps.length}` : `0/${goal.steps.length}`}
+              </strong>
+            </div>
+            <div className="score-tile">
+              <span>Business avg</span>
+              <strong>{ratingPercent(averageCurrent(path.vehicleAttrs))}</strong>
+            </div>
+            <div className="score-tile">
+              <span>Person avg</span>
+              <strong>{ratingPercent(averageCurrent(path.driverAttrs))}</strong>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <EditorPanel target={editTarget} goal={goal} path={path} onClose={() => setEditTarget(null)} onSubmit={submitEditor} />
 
       <section className="workspace-grid workspace-grid-single">
         <section className="timeline-panel">
+          <div className="section-heading">
+            <div>
+              <h2>Roadmap steps</h2>
+              <p>Add, edit, delete, and mark your current position.</p>
+            </div>
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                setEditTarget({
+                  type: "step",
+                  item: {
+                    label: "New Step",
+                    title: "New roadmap step",
+                    meaning: "",
+                    build: [],
+                    factors: { default: 0.5 },
+                  },
+                })
+              }
+            >
+              <Plus size={16} />
+              Add step
+            </Button>
+          </div>
           <div className="timeline-list">
-            {goal.steps.map((step, originalIndex) => (
-              <StepButton
-                key={`${step.label}-${step.title}`}
-                path={path}
-                step={step}
-                number={goal.steps.length - originalIndex - 1}
-                current={current}
-                active={selectedStepIndex === originalIndex}
-                onClick={() => {
-                  setSelectedStepIndex(originalIndex);
-                  updateUrl(originalIndex);
-                }}
-              />
-            ))}
+            {goal.steps.length ? (
+              goal.steps.map((step, index) => (
+                <StepCard
+                  key={step.id || step.title}
+                  step={step}
+                  path={path}
+                  number={index + 1}
+                  current={path.currentStepId === step.id}
+                  busy={busy}
+                  onEdit={() => setEditTarget({ type: "step", item: step })}
+                  onDelete={() => safeMutate({ action: "deleteStep", id: step.id })}
+                  onProgress={() => safeMutate({ action: "setProgress", pathId: path.id, stepId: step.id })}
+                  onOpen={() => setSelectedStepId(step.id || null)}
+                />
+              ))
+            ) : (
+              <EmptyState title="No steps yet" description="Add your first roadmap step." />
+            )}
           </div>
         </section>
       </section>
 
-      <StepDetails
-        open={selectedStepIndex !== null}
+      <StepSheet
+        open={selectedStep !== null}
+        step={selectedStep}
         goal={goal}
         path={path}
-        step={selectedStep}
-        current={current}
-        onClose={() => {
-          setSelectedStepIndex(null);
-          updateUrl(null);
+        busy={busy}
+        onClose={() => setSelectedStepId(null)}
+        onEditStep={(step) => {
+          setSelectedStepId(null);
+          setEditTarget({ type: "step", item: step });
         }}
-      />
-      <CurrentRatingSheet
-        open={currentRatingOpen}
-        path={path}
-        current={current}
-        onChange={updateCurrent}
-        onClose={() => setCurrentRatingOpen(false)}
+        onSetProgress={(step) => safeMutate({ action: "setProgress", pathId: path.id, stepId: step.id })}
+        onRating={(attr, value) => safeMutate({ action: "updateMetricRating", id: attr.id, current: value })}
+        onEditMetric={(attr, kind) => {
+          setSelectedStepId(null);
+          setEditTarget({ type: "metric", item: attr, kind });
+        }}
+        onDeleteMetric={(attr) => safeMutate({ action: "deleteMetric", id: attr.id })}
+        onAddMetric={(kind) => {
+          setSelectedStepId(null);
+          setEditTarget({
+            type: "metric",
+            kind,
+            item: { name: "New metric", final: 10, group: "default", meaning: "", build: [] },
+          });
+        }}
       />
     </main>
   );
