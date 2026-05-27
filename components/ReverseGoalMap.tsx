@@ -192,11 +192,11 @@ function StepSheet({
   path,
   busy,
   onClose,
-  onEditStep,
   onSetProgress,
   onDeleteStep,
+  onSaveStep,
   onRating,
-  onEditMetric,
+  onSaveMetric,
   onDeleteMetric,
   onAddMetric,
 }: {
@@ -206,27 +206,33 @@ function StepSheet({
   path: Path;
   busy: boolean;
   onClose: () => void;
-  onEditStep: (step: Step) => void;
   onSetProgress: (step: Step) => void;
   onDeleteStep: (step: Step) => void;
+  onSaveStep: (step: Step, form: FormData) => void;
   onRating: (attr: Attribute, value: number) => void;
-  onEditMetric: (attr: Attribute, kind: AttrKind) => void;
+  onSaveMetric: (attr: Attribute, kind: AttrKind, form: FormData) => void;
   onDeleteMetric: (attr: Attribute) => void;
   onAddMetric: (kind: AttrKind) => void;
 }) {
   const [view, setView] = useState<"details" | "business" | "person">("details");
   const [selectedMetric, setSelectedMetric] = useState<SelectedMetric>(null);
+  const [editingStep, setEditingStep] = useState(false);
+  const [editingMetric, setEditingMetric] = useState(false);
 
   useEffect(() => {
     if (open) {
       setView("details");
       setSelectedMetric(null);
+      setEditingStep(false);
+      setEditingMetric(false);
     }
   }, [open, step?.id]);
 
   function switchView(nextView: "details" | "business" | "person") {
     setView(nextView);
     setSelectedMetric(null);
+    setEditingStep(false);
+    setEditingMetric(false);
   }
 
   const selectedMetricMatchesView =
@@ -257,7 +263,19 @@ function StepSheet({
               </div>
             </div>
 
-            {view === "details" ? (
+            {view === "details" && editingStep ? (
+              <StepEditForm
+                step={step}
+                busy={busy}
+                onCancel={() => setEditingStep(false)}
+                onSave={(form) => {
+                  setEditingStep(false);
+                  onSaveStep(step, form);
+                }}
+              />
+            ) : null}
+
+            {view === "details" && !editingStep ? (
               <div className="details-stack">
                 <Card>
                   <CardHeader>
@@ -268,7 +286,7 @@ function StepSheet({
                           <CheckCircle2 size={16} />
                           Current
                         </Button>
-                        <Button variant="outline" type="button" disabled={busy} onClick={() => onEditStep(step)}>
+                        <Button variant="outline" type="button" disabled={busy} onClick={() => setEditingStep(true)}>
                           <Pencil size={16} />
                           Edit
                         </Button>
@@ -314,9 +332,18 @@ function StepSheet({
                 title="Business Matrix"
                 icon={<BriefcaseBusiness size={17} />}
                 selectedMetric={selectedMetric}
+                editing={editingMetric}
                 busy={busy}
-                onBack={() => setSelectedMetric(null)}
-                onEdit={onEditMetric}
+                onBack={() => {
+                  setSelectedMetric(null);
+                  setEditingMetric(false);
+                }}
+                onEdit={() => setEditingMetric(true)}
+                onCancelEdit={() => setEditingMetric(false)}
+                onSave={(attr, kind, form) => {
+                  setEditingMetric(false);
+                  onSaveMetric(attr, kind, form);
+                }}
                 onDelete={onDeleteMetric}
               />
             ) : null}
@@ -329,10 +356,16 @@ function StepSheet({
                 kind="vehicle"
                 busy={busy}
                 onRating={onRating}
-                onEdit={onEditMetric}
+                onEdit={(attr, kind) => {
+                  setSelectedMetric({ attr, kind });
+                  setEditingMetric(true);
+                }}
                 onDelete={onDeleteMetric}
                 onAdd={onAddMetric}
-                onOpen={setSelectedMetric}
+                onOpen={(metric) => {
+                  setSelectedMetric(metric);
+                  setEditingMetric(false);
+                }}
               />
             ) : null}
 
@@ -341,9 +374,18 @@ function StepSheet({
                 title="Person Matrix"
                 icon={<UserRound size={17} />}
                 selectedMetric={selectedMetric}
+                editing={editingMetric}
                 busy={busy}
-                onBack={() => setSelectedMetric(null)}
-                onEdit={onEditMetric}
+                onBack={() => {
+                  setSelectedMetric(null);
+                  setEditingMetric(false);
+                }}
+                onEdit={() => setEditingMetric(true)}
+                onCancelEdit={() => setEditingMetric(false)}
+                onSave={(attr, kind, form) => {
+                  setEditingMetric(false);
+                  onSaveMetric(attr, kind, form);
+                }}
                 onDelete={onDeleteMetric}
               />
             ) : null}
@@ -356,10 +398,16 @@ function StepSheet({
                 kind="driver"
                 busy={busy}
                 onRating={onRating}
-                onEdit={onEditMetric}
+                onEdit={(attr, kind) => {
+                  setSelectedMetric({ attr, kind });
+                  setEditingMetric(true);
+                }}
                 onDelete={onDeleteMetric}
                 onAdd={onAddMetric}
-                onOpen={setSelectedMetric}
+                onOpen={(metric) => {
+                  setSelectedMetric(metric);
+                  setEditingMetric(false);
+                }}
               />
             ) : null}
           </div>
@@ -463,20 +511,30 @@ function MetricDetail({
   title,
   icon,
   selectedMetric,
+  editing,
   busy,
   onBack,
   onEdit,
+  onCancelEdit,
+  onSave,
   onDelete,
 }: {
   title: string;
   icon: ReactNode;
   selectedMetric: Exclude<SelectedMetric, null>;
+  editing: boolean;
   busy: boolean;
   onBack: () => void;
-  onEdit: (attr: Attribute, kind: AttrKind) => void;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  onSave: (attr: Attribute, kind: AttrKind, form: FormData) => void;
   onDelete: (attr: Attribute) => void;
 }) {
   const { attr, kind } = selectedMetric;
+
+  if (editing) {
+    return <MetricEditForm title={title} icon={icon} attr={attr} kind={kind} busy={busy} onCancel={onCancelEdit} onSave={onSave} />;
+  }
 
   return (
     <div className="details-stack">
@@ -497,7 +555,7 @@ function MetricDetail({
               </CardDescription>
             </div>
             <span className="row-actions">
-              <ActionButton title="Edit metric" disabled={busy} onClick={() => onEdit(attr, kind)}>
+              <ActionButton title="Edit metric" disabled={busy} onClick={onEdit}>
                 <Pencil size={16} />
               </ActionButton>
               <ActionButton title="Delete metric" disabled={busy} onClick={() => onDelete(attr)}>
@@ -534,6 +592,134 @@ function MetricDetail({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function StepEditForm({
+  step,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  step: Step;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (form: FormData) => void;
+}) {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSave(new FormData(event.currentTarget));
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Edit step</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form className="editor-form sheet-editor-form" onSubmit={submit}>
+          <label>
+            Step name
+            <input name="title" defaultValue={step.title} />
+          </label>
+          <label>
+            Short label
+            <input name="label" defaultValue={step.label} />
+          </label>
+          <label>
+            Meaning / explanation
+            <textarea name="meaning" rows={5} defaultValue={step.meaning} />
+          </label>
+          <label>
+            How to build or achieve it
+            <textarea name="build" rows={6} defaultValue={buildText(step.build)} />
+          </label>
+          <label>
+            Rating factors JSON
+            <textarea name="factors" rows={5} defaultValue={JSON.stringify(step.factors, null, 2)} />
+          </label>
+          <div className="editor-actions">
+            <Button type="submit" disabled={busy}>
+              <Save size={16} />
+              Save
+            </Button>
+            <Button variant="outline" type="button" disabled={busy} onClick={onCancel}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MetricEditForm({
+  title,
+  icon,
+  attr,
+  kind,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  title: string;
+  icon: ReactNode;
+  attr: Attribute;
+  kind: AttrKind;
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (attr: Attribute, kind: AttrKind, form: FormData) => void;
+}) {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onSave(attr, kind, new FormData(event.currentTarget));
+  }
+
+  return (
+    <Card className="attribute-card">
+      <CardHeader>
+        <CardTitle className="attribute-title">
+          {icon}
+          Edit {title}
+        </CardTitle>
+        <CardDescription>{clean(attr.name)}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="editor-form sheet-editor-form" onSubmit={submit}>
+          <label>
+            Metric name
+            <input name="name" defaultValue={attr.name} />
+          </label>
+          <div className="editor-two-col">
+            <label>
+              Group
+              <input name="group" defaultValue={attr.group} />
+            </label>
+            <label>
+              Target rating
+              <input name="final" type="number" min="0" max="10" defaultValue={attr.final} />
+            </label>
+          </div>
+          <label>
+            Meaning / explanation
+            <textarea name="meaning" rows={5} defaultValue={attr.meaning} />
+          </label>
+          <label>
+            How to build or achieve it
+            <textarea name="build" rows={6} defaultValue={buildText(attr.build)} />
+          </label>
+          <div className="editor-actions">
+            <Button type="submit" disabled={busy}>
+              <Save size={16} />
+              Save
+            </Button>
+            <Button variant="outline" type="button" disabled={busy} onClick={onCancel}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -938,17 +1124,34 @@ export default function ReverseGoalMap() {
         path={path}
         busy={busy}
         onClose={() => setSelectedStepId(null)}
-        onEditStep={(step) => {
-          setSelectedStepId(null);
-          setEditTarget({ type: "step", item: step });
-        }}
         onSetProgress={(step) => safeMutate({ action: "setProgress", pathId: path.id, stepId: step.id })}
         onDeleteStep={(step) => safeMutate({ action: "deleteStep", id: step.id })}
+        onSaveStep={(step, form) =>
+          safeMutate({
+            action: "updateStep",
+            id: step.id,
+            goalId: goal.id,
+            label: form.get("label"),
+            title: form.get("title"),
+            meaning: form.get("meaning"),
+            build: linesFromForm(form, "build"),
+            factors: parseFactors(form.get("factors")),
+          })
+        }
         onRating={(attr, value) => safeMutate({ action: "updateMetricRating", id: attr.id, current: value })}
-        onEditMetric={(attr, kind) => {
-          setSelectedStepId(null);
-          setEditTarget({ type: "metric", item: attr, kind });
-        }}
+        onSaveMetric={(attr, kind, form) =>
+          safeMutate({
+            action: "updateMetric",
+            id: attr.id,
+            pathId: path.id,
+            kind,
+            name: form.get("name"),
+            final: form.get("final"),
+            group: form.get("group"),
+            meaning: form.get("meaning"),
+            build: linesFromForm(form, "build"),
+          })
+        }
         onDeleteMetric={(attr) => safeMutate({ action: "deleteMetric", id: attr.id })}
         onAddMetric={(kind) => {
           setSelectedStepId(null);
