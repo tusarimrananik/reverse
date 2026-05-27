@@ -510,8 +510,7 @@ body.sheet-open {
   justify-items: end;
 }
 
-.metric-rating-pair small,
-.metric-slider-row small {
+.metric-rating-pair small {
   color: var(--muted-foreground);
   font-size: 0.7rem;
   font-weight: 750;
@@ -525,8 +524,32 @@ body.sheet-open {
   align-items: center;
 }
 
+.metric-slider-row small {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
 .metric-slider-row .ui-slider {
   grid-column: auto;
+}
+
+.ui-slider:disabled {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.editable-attribute-row .ui-slider:disabled {
+  pointer-events: none;
+}
+
+.readonly-slider-panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
 
 .timeline-list {

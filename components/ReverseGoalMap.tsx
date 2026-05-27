@@ -195,10 +195,8 @@ function StepSheet({
   onSetProgress,
   onDeleteStep,
   onSaveStep,
-  onRating,
   onSaveMetric,
   onDeleteMetric,
-  onAddMetric,
 }: {
   open: boolean;
   step: Step | null;
@@ -209,10 +207,8 @@ function StepSheet({
   onSetProgress: (step: Step) => void;
   onDeleteStep: (step: Step) => void;
   onSaveStep: (step: Step, form: FormData) => void;
-  onRating: (attr: Attribute, value: number) => void;
   onSaveMetric: (attr: Attribute, kind: AttrKind, form: FormData) => void;
   onDeleteMetric: (attr: Attribute) => void;
-  onAddMetric: (kind: AttrKind) => void;
 }) {
   const [view, setView] = useState<"details" | "business" | "person">("details");
   const [selectedMetric, setSelectedMetric] = useState<SelectedMetric>(null);
@@ -354,10 +350,6 @@ function StepSheet({
                 icon={<BriefcaseBusiness size={17} />}
                 attrs={path.vehicleAttrs}
                 kind="vehicle"
-                busy={busy}
-                onRating={onRating}
-                onTargetRating={onSaveMetric}
-                onAdd={onAddMetric}
                 onOpen={(metric) => {
                   setSelectedMetric(metric);
                   setEditingMetric(false);
@@ -392,10 +384,6 @@ function StepSheet({
                 icon={<UserRound size={17} />}
                 attrs={path.driverAttrs}
                 kind="driver"
-                busy={busy}
-                onRating={onRating}
-                onTargetRating={onSaveMetric}
-                onAdd={onAddMetric}
                 onOpen={(metric) => {
                   setSelectedMetric(metric);
                   setEditingMetric(false);
@@ -414,20 +402,12 @@ function MetricCard({
   icon,
   attrs,
   kind,
-  busy,
-  onRating,
-  onTargetRating,
-  onAdd,
   onOpen,
 }: {
   title: string;
   icon: ReactNode;
   attrs: Attribute[];
   kind: AttrKind;
-  busy: boolean;
-  onRating: (attr: Attribute, value: number) => void;
-  onTargetRating: (attr: Attribute, kind: AttrKind, form: FormData) => void;
-  onAdd: (kind: AttrKind) => void;
   onOpen: (selectedMetric: Exclude<SelectedMetric, null>) => void;
 }) {
   return (
@@ -438,10 +418,6 @@ function MetricCard({
             {icon}
             {title}
           </CardTitle>
-          <Button variant="outline" type="button" disabled={busy} onClick={() => onAdd(kind)}>
-            <Plus size={16} />
-            Add
-          </Button>
         </div>
       </CardHeader>
       <CardContent className="attribute-list">
@@ -466,7 +442,6 @@ function MetricCard({
             >
               <span>
                 <strong>{clean(attr.name)}</strong>
-                <small>{clean(attr.group)}</small>
               </span>
               <span className="metric-rating-pair">
                 <small>Current</small>
@@ -483,8 +458,8 @@ function MetricCard({
                   max="10"
                   step="1"
                   value={[currentValue(attr)]}
-                  aria-label={`Current rating slider for ${clean(attr.name)}`}
-                  onValueChange={([nextValue]) => onRating(attr, clamp(nextValue || 0, 0, 10))}
+                  disabled
+                  aria-label={`Current rating preview for ${clean(attr.name)}`}
                 />
               </span>
               <span className="metric-slider-row">
@@ -494,16 +469,8 @@ function MetricCard({
                   max="10"
                   step="1"
                   value={[clamp(attr.final, 0, 10)]}
-                  aria-label={`Target rating slider for ${clean(attr.name)}`}
-                  onValueChange={([nextValue]) => {
-                    const form = new FormData();
-                    form.set("name", attr.name);
-                    form.set("group", attr.group);
-                    form.set("final", String(clamp(nextValue || 0, 0, 10)));
-                    form.set("meaning", attr.meaning);
-                    form.set("build", buildText(attr.build));
-                    onTargetRating(attr, kind, form);
-                  }}
+                  disabled
+                  aria-label={`Target rating preview for ${clean(attr.name)}`}
                 />
               </span>
             </div>
@@ -560,7 +527,7 @@ function MetricDetail({
                 {clean(attr.name)}
               </CardTitle>
               <CardDescription>
-                {title} / {clean(attr.group)} target {ratingPercent(attr.final)}
+                {title} current {ratingPercent(currentValue(attr))} / target {ratingPercent(attr.final)}
               </CardDescription>
             </div>
             <span className="row-actions">
@@ -573,7 +540,32 @@ function MetricDetail({
             </span>
           </div>
         </CardHeader>
-        <CardContent className="details-grid">
+        <CardContent className="details-stack">
+          <div className="readonly-slider-panel">
+            <span className="metric-slider-row">
+              <small>Current</small>
+              <Slider
+                min="0"
+                max="10"
+                step="1"
+                value={[currentValue(attr)]}
+                disabled
+                aria-label={`Current rating preview for ${clean(attr.name)}`}
+              />
+            </span>
+            <span className="metric-slider-row">
+              <small>Target</small>
+              <Slider
+                min="0"
+                max="10"
+                step="1"
+                value={[clamp(attr.final, 0, 10)]}
+                disabled
+                aria-label={`Target rating preview for ${clean(attr.name)}`}
+              />
+            </span>
+          </div>
+          <div className="details-grid">
           <Card>
             <CardHeader>
               <CardTitle className="detail-card-title">Meaning</CardTitle>
@@ -598,6 +590,7 @@ function MetricDetail({
               )}
             </CardContent>
           </Card>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -679,11 +672,15 @@ function MetricEditForm({
   onCancel: () => void;
   onSave: (attr: Attribute, kind: AttrKind, form: FormData) => void;
 }) {
+  const [currentRating, setCurrentRating] = useState(currentValue(attr));
   const [targetRating, setTargetRating] = useState(clamp(attr.final, 0, 10));
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSave(attr, kind, new FormData(event.currentTarget));
+    const form = new FormData(event.currentTarget);
+    form.set("current", String(currentRating));
+    form.set("final", String(targetRating));
+    onSave(attr, kind, form);
   }
 
   return (
@@ -701,27 +698,34 @@ function MetricEditForm({
             Metric name
             <input name="name" defaultValue={attr.name} />
           </label>
-          <div className="editor-two-col">
-            <label>
-              Group
-              <input name="group" defaultValue={attr.group} />
-            </label>
-            <label>
-              Target rating
-              <span className="slider-field">
-                <Slider
-                  name="final"
-                  min="0"
-                  max="10"
-                  step="1"
-                  value={[targetRating]}
-                  aria-label={`Target rating slider for ${clean(attr.name)}`}
-                  onValueChange={([nextValue]) => setTargetRating(clamp(nextValue || 0, 0, 10))}
-                />
-                <strong className="rating-value">{ratingPercent(targetRating)}</strong>
-              </span>
-            </label>
-          </div>
+          <label>
+            Current rating
+            <span className="slider-field">
+              <Slider
+                min="0"
+                max="10"
+                step="1"
+                value={[currentRating]}
+                aria-label={`Current rating slider for ${clean(attr.name)}`}
+                onValueChange={([nextValue]) => setCurrentRating(clamp(nextValue || 0, 0, 10))}
+              />
+              <strong className="rating-value">{ratingPercent(currentRating)}</strong>
+            </span>
+          </label>
+          <label>
+            Target rating
+            <span className="slider-field">
+              <Slider
+                min="0"
+                max="10"
+                step="1"
+                value={[targetRating]}
+                aria-label={`Target rating slider for ${clean(attr.name)}`}
+                onValueChange={([nextValue]) => setTargetRating(clamp(nextValue || 0, 0, 10))}
+              />
+              <strong className="rating-value">{ratingPercent(targetRating)}</strong>
+            </span>
+          </label>
           <label>
             Meaning / explanation
             <textarea name="meaning" rows={5} defaultValue={attr.meaning} />
@@ -837,16 +841,10 @@ function EditorPanel({
               Metric name
               <input name="name" defaultValue={target.item.name} />
             </label>
-            <div className="editor-two-col">
-              <label>
-                Group
-                <input name="group" defaultValue={target.item.group} />
-              </label>
-              <label>
-                Target rating
-                <input name="final" type="number" min="0" max="10" defaultValue={target.item.final} />
-              </label>
-            </div>
+            <label>
+              Target rating
+              <input name="final" type="number" min="0" max="10" defaultValue={target.item.final} />
+            </label>
             <label>
               Meaning / explanation
               <textarea name="meaning" rows={4} defaultValue={target.item.meaning} />
@@ -952,7 +950,7 @@ export default function ReverseGoalMap() {
         kind: target.kind,
         name: form.get("name"),
         final: form.get("final"),
-        group: form.get("group"),
+        group: target.item.group || "default",
         meaning: form.get("meaning"),
         build: linesFromForm(form, "build"),
       });
@@ -1065,6 +1063,36 @@ export default function ReverseGoalMap() {
                 <ActionButton title="Delete roadmap" disabled={busy} onClick={() => safeMutate({ action: "deletePath", id: path.id })}>
                   <Trash2 size={16} />
                 </ActionButton>
+                <Button
+                  variant="outline"
+                  type="button"
+                  disabled={busy}
+                  onClick={() =>
+                    setEditTarget({
+                      type: "metric",
+                      kind: "vehicle",
+                      item: { name: "New business matrix", final: 10, group: "default", meaning: "", build: [] },
+                    })
+                  }
+                >
+                  <Plus size={16} />
+                  Business matrix
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  disabled={busy}
+                  onClick={() =>
+                    setEditTarget({
+                      type: "metric",
+                      kind: "driver",
+                      item: { name: "New person matrix", final: 10, group: "default", meaning: "", build: [] },
+                    })
+                  }
+                >
+                  <Plus size={16} />
+                  Person matrix
+                </Button>
               </span>
             </div>
           </CardHeader>
@@ -1160,29 +1188,23 @@ export default function ReverseGoalMap() {
             factors: parseFactors(form.get("factors")),
           })
         }
-        onRating={(attr, value) => safeMutate({ action: "updateMetricRating", id: attr.id, current: value })}
         onSaveMetric={(attr, kind, form) =>
-          safeMutate({
-            action: "updateMetric",
-            id: attr.id,
-            pathId: path.id,
-            kind,
-            name: form.get("name"),
-            final: form.get("final"),
-            group: form.get("group"),
-            meaning: form.get("meaning"),
-            build: linesFromForm(form, "build"),
-          })
+          void (async () => {
+            await safeMutate({
+              action: "updateMetric",
+              id: attr.id,
+              pathId: path.id,
+              kind,
+              name: form.get("name"),
+              final: form.get("final"),
+              group: "default",
+              meaning: form.get("meaning"),
+              build: linesFromForm(form, "build"),
+            });
+            await safeMutate({ action: "updateMetricRating", id: attr.id, current: form.get("current") });
+          })()
         }
         onDeleteMetric={(attr) => safeMutate({ action: "deleteMetric", id: attr.id })}
-        onAddMetric={(kind) => {
-          setSelectedStepId(null);
-          setEditTarget({
-            type: "metric",
-            kind,
-            item: { name: "New metric", final: 10, group: "default", meaning: "", build: [] },
-          });
-        }}
       />
     </main>
   );
