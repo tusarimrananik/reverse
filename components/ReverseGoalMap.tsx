@@ -242,7 +242,6 @@ function StepSheet({
           <div className="sheet-scroll">
             <div className="detail-heading step-sheet-heading">
               <div>
-                <p>{clean(goal.title)} / {clean(path.name)}</p>
                 <h2>{clean(step.title)}</h2>
               </div>
               <div className="sheet-view-switcher" aria-label="Step detail view">
