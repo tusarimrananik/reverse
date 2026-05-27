@@ -60,54 +60,58 @@ export async function POST(request: Request) {
   const body = await request.json();
   const action = String(body.action || "");
 
-  switch (action) {
-    case "createGoal":
-      await createGoal(String(body.title || "New goal"));
-      break;
-    case "updateGoal":
-      await updateGoal(String(body.id), String(body.title || "Untitled goal"));
-      break;
-    case "deleteGoal":
-      await deleteGoal(String(body.id));
-      break;
-    case "importGoals":
-      await importGoals(body.goals as Goal | Goal[]);
-      break;
-    case "createPath":
-      await createPath(String(body.goalId), String(body.name || "New roadmap"));
-      break;
-    case "updatePath":
-      await updatePath(String(body.id), String(body.name || "Untitled roadmap"));
-      break;
-    case "deletePath":
-      await deletePath(String(body.id));
-      break;
-    case "setProgress":
-      await setProgress(String(body.pathId), body.stepId ? String(body.stepId) : null);
-      break;
-    case "createStep":
-      await createStep(String(body.goalId), stepInput(body));
-      break;
-    case "updateStep":
-      await updateStep(String(body.id), stepInput(body));
-      break;
-    case "deleteStep":
-      await deleteStep(String(body.id));
-      break;
-    case "createMetric":
-      await createMetric(String(body.pathId), String(body.kind) as AttrKind, metricInput(body));
-      break;
-    case "updateMetric":
-      await updateMetric(String(body.id), metricInput(body));
-      break;
-    case "updateMetricRating":
-      await updateMetricRating(String(body.id), clamp(Number(body.current || 0), 0, 10));
-      break;
-    case "deleteMetric":
-      await deleteMetric(String(body.id));
-      break;
-    default:
-      return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  try {
+    switch (action) {
+      case "createGoal":
+        await createGoal(String(body.title || "New goal"));
+        break;
+      case "updateGoal":
+        await updateGoal(String(body.id), String(body.title || "Untitled goal"));
+        break;
+      case "deleteGoal":
+        await deleteGoal(String(body.id));
+        break;
+      case "importGoals":
+        await importGoals(body.goals as Goal | Goal[]);
+        break;
+      case "createPath":
+        await createPath(String(body.goalId), String(body.name || "New roadmap"));
+        break;
+      case "updatePath":
+        await updatePath(String(body.id), String(body.name || "Untitled roadmap"));
+        break;
+      case "deletePath":
+        await deletePath(String(body.id));
+        break;
+      case "setProgress":
+        await setProgress(String(body.pathId), body.stepId ? String(body.stepId) : null);
+        break;
+      case "createStep":
+        await createStep(String(body.goalId), stepInput(body));
+        break;
+      case "updateStep":
+        await updateStep(String(body.id), stepInput(body));
+        break;
+      case "deleteStep":
+        await deleteStep(String(body.id));
+        break;
+      case "createMetric":
+        await createMetric(String(body.pathId), String(body.kind) as AttrKind, metricInput(body));
+        break;
+      case "updateMetric":
+        await updateMetric(String(body.id), metricInput(body));
+        break;
+      case "updateMetricRating":
+        await updateMetricRating(String(body.id), clamp(Number(body.current || 0), 0, 10));
+        break;
+      case "deleteMetric":
+        await deleteMetric(String(body.id));
+        break;
+      default:
+        return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+    }
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Dashboard update failed" }, { status: 400 });
   }
 
   return NextResponse.json({ goals: await getDashboardData() });

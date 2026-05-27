@@ -108,6 +108,7 @@ function seedMetric(pathId: string, kind: AttrKind, attr: Attribute, index: numb
 
 export async function getDashboardData(): Promise<Goal[]> {
   await ensureSeeded();
+  await removeGoalsWithoutSteps();
 
   const goals = await prisma.goal.findMany({
     orderBy: [{ position: "asc" }, { title: "asc" }],
@@ -147,6 +148,16 @@ export async function getDashboardData(): Promise<Goal[]> {
   }));
 }
 
+async function removeGoalsWithoutSteps() {
+  await prisma.goal.deleteMany({
+    where: {
+      steps: {
+        none: {},
+      },
+    },
+  });
+}
+
 function toAttribute(row: {
   id: string;
   name: string;
@@ -176,6 +187,17 @@ export async function createGoal(title: string) {
       id,
       title,
       position,
+      steps: {
+        create: {
+          id: uid("step"),
+          label: "First Step",
+          title: "Define the first required roadmap step.",
+          meaning: "Every goal needs at least one step. Edit this starter step with the real first milestone for your roadmap.",
+          build: JSON.stringify(["Replace this with the concrete actions for this step."]),
+          factors: JSON.stringify({ default: 0.25 }),
+          position: 0,
+        },
+      },
       paths: {
         create: {
           id: uid("path"),
@@ -198,6 +220,8 @@ export async function deleteGoal(id: string) {
 export async function importGoals(input: Goal | Goal[]) {
   const incoming = Array.isArray(input) ? input : [input];
   if (!incoming.length) return;
+  const invalidGoal = incoming.find((goal) => !Array.isArray(goal.steps) || goal.steps.length === 0);
+  if (invalidGoal) throw new Error("Every imported goal must include at least one step.");
 
   const existingGoalPositions = await prisma.goal.findMany({ select: { position: true } });
   let nextGoalPosition = maxPosition(existingGoalPositions);
