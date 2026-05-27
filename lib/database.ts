@@ -107,7 +107,6 @@ function seedMetric(pathId: string, kind: AttrKind, attr: Attribute, index: numb
 }
 
 export async function getDashboardData(): Promise<Goal[]> {
-  await ensureSeeded();
   await removeGoalsWithoutSteps();
 
   const goals = await prisma.goal.findMany({

@@ -921,6 +921,11 @@ export default function ReverseGoalMap() {
     return (
       <main className="app-shell">
         <EmptyState title="No database content yet" description="Create a goal to start building your editable dashboard." />
+        <input ref={importInputRef} className="visually-hidden" type="file" accept="application/json,.json" onChange={importJsonFile} />
+        <Button variant="outline" type="button" disabled={busy} onClick={() => importInputRef.current?.click()}>
+          <Upload size={16} />
+          Import JSON
+        </Button>
       </main>
     );
   }
