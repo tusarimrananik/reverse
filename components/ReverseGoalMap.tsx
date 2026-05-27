@@ -156,20 +156,12 @@ function StepCard({
   path,
   number,
   current,
-  busy,
-  onEdit,
-  onDelete,
-  onProgress,
   onOpen,
 }: {
   step: Step;
   path: Path;
   number: number;
   current: boolean;
-  busy: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-  onProgress: () => void;
   onOpen: () => void;
 }) {
   const vehicleGap = avgRating(path.vehicleAttrs, step) - averageCurrent(path.vehicleAttrs);
@@ -189,17 +181,6 @@ function StepCard({
         <small>{clean(step.label)}</small>
       </span>
       <StepStats path={path} step={step} />
-      <span className="row-actions">
-        <ActionButton title="Mark current step" disabled={busy} onClick={onProgress}>
-          <CheckCircle2 size={16} />
-        </ActionButton>
-        <ActionButton title="Edit step" disabled={busy} onClick={onEdit}>
-          <Pencil size={16} />
-        </ActionButton>
-        <ActionButton title="Delete step" disabled={busy} onClick={onDelete}>
-          <Trash2 size={16} />
-        </ActionButton>
-      </span>
     </article>
   );
 }
@@ -213,6 +194,7 @@ function StepSheet({
   onClose,
   onEditStep,
   onSetProgress,
+  onDeleteStep,
   onRating,
   onEditMetric,
   onDeleteMetric,
@@ -226,6 +208,7 @@ function StepSheet({
   onClose: () => void;
   onEditStep: (step: Step) => void;
   onSetProgress: (step: Step) => void;
+  onDeleteStep: (step: Step) => void;
   onRating: (attr: Attribute, value: number) => void;
   onEditMetric: (attr: Attribute, kind: AttrKind) => void;
   onDeleteMetric: (attr: Attribute) => void;
@@ -288,6 +271,10 @@ function StepSheet({
                         <Button variant="outline" type="button" disabled={busy} onClick={() => onEditStep(step)}>
                           <Pencil size={16} />
                           Edit
+                        </Button>
+                        <Button variant="outline" type="button" disabled={busy} onClick={() => onDeleteStep(step)}>
+                          <Trash2 size={16} />
+                          Delete
                         </Button>
                       </span>
                     </div>
@@ -934,10 +921,6 @@ export default function ReverseGoalMap() {
                   path={path}
                   number={index + 1}
                   current={path.currentStepId === step.id}
-                  busy={busy}
-                  onEdit={() => setEditTarget({ type: "step", item: step })}
-                  onDelete={() => safeMutate({ action: "deleteStep", id: step.id })}
-                  onProgress={() => safeMutate({ action: "setProgress", pathId: path.id, stepId: step.id })}
                   onOpen={() => setSelectedStepId(step.id || null)}
                 />
               ))
@@ -960,6 +943,7 @@ export default function ReverseGoalMap() {
           setEditTarget({ type: "step", item: step });
         }}
         onSetProgress={(step) => safeMutate({ action: "setProgress", pathId: path.id, stepId: step.id })}
+        onDeleteStep={(step) => safeMutate({ action: "deleteStep", id: step.id })}
         onRating={(attr, value) => safeMutate({ action: "updateMetricRating", id: attr.id, current: value })}
         onEditMetric={(attr, kind) => {
           setSelectedStepId(null);
