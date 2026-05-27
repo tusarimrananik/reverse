@@ -4,6 +4,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  ArrowLeft,
   BriefcaseBusiness,
   CheckCircle2,
   CircleDollarSign,
@@ -28,6 +29,7 @@ import { avgRating, clamp, clean, currentGapClass, stepRating } from "@/lib/rati
 import type { Attribute, Goal, Path, Step } from "@/lib/types";
 
 type AttrKind = "vehicle" | "driver";
+type SelectedMetric = { attr: Attribute; kind: AttrKind } | null;
 type EditTarget =
   | { type: "goal"; item: Goal }
   | { type: "path"; item: Path }
@@ -198,16 +200,6 @@ function StepCard({
           <Trash2 size={16} />
         </ActionButton>
       </span>
-      <div className="timeline-details">
-        <p>{clean(step.meaning)}</p>
-        {step.build.length ? (
-          <ul className="action-list">
-            {step.build.map((item) => (
-              <li key={item}>{clean(item)}</li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
     </article>
   );
 }
@@ -240,10 +232,22 @@ function StepSheet({
   onAddMetric: (kind: AttrKind) => void;
 }) {
   const [view, setView] = useState<"details" | "business" | "person">("details");
+  const [selectedMetric, setSelectedMetric] = useState<SelectedMetric>(null);
 
   useEffect(() => {
-    if (open) setView("details");
+    if (open) {
+      setView("details");
+      setSelectedMetric(null);
+    }
   }, [open, step?.id]);
+
+  function switchView(nextView: "details" | "business" | "person") {
+    setView(nextView);
+    setSelectedMetric(null);
+  }
+
+  const selectedMetricMatchesView =
+    selectedMetric && ((view === "business" && selectedMetric.kind === "vehicle") || (view === "person" && selectedMetric.kind === "driver"));
 
   return (
     <Sheet open={open} onOpenChange={(nextOpen) => (!nextOpen ? onClose() : undefined)}>
@@ -256,14 +260,14 @@ function StepSheet({
                 <h2>{clean(step.title)}</h2>
               </div>
               <div className="sheet-view-switcher" aria-label="Step detail view">
-                <Button variant={view === "details" ? "default" : "outline"} type="button" onClick={() => setView("details")}>
+                <Button variant={view === "details" ? "default" : "outline"} type="button" onClick={() => switchView("details")}>
                   Details
                 </Button>
-                <Button variant={view === "business" ? "default" : "outline"} type="button" onClick={() => setView("business")}>
+                <Button variant={view === "business" ? "default" : "outline"} type="button" onClick={() => switchView("business")}>
                   <BriefcaseBusiness size={16} />
                   Business
                 </Button>
-                <Button variant={view === "person" ? "default" : "outline"} type="button" onClick={() => setView("person")}>
+                <Button variant={view === "person" ? "default" : "outline"} type="button" onClick={() => switchView("person")}>
                   <UserRound size={16} />
                   Person
                 </Button>
@@ -318,7 +322,19 @@ function StepSheet({
               </div>
             ) : null}
 
-            {view === "business" ? (
+            {view === "business" && selectedMetricMatchesView ? (
+              <MetricDetail
+                title="Business Matrix"
+                icon={<BriefcaseBusiness size={17} />}
+                selectedMetric={selectedMetric}
+                busy={busy}
+                onBack={() => setSelectedMetric(null)}
+                onEdit={onEditMetric}
+                onDelete={onDeleteMetric}
+              />
+            ) : null}
+
+            {view === "business" && !selectedMetricMatchesView ? (
               <MetricCard
                 title="Business Matrix"
                 icon={<BriefcaseBusiness size={17} />}
@@ -329,10 +345,23 @@ function StepSheet({
                 onEdit={onEditMetric}
                 onDelete={onDeleteMetric}
                 onAdd={onAddMetric}
+                onOpen={setSelectedMetric}
               />
             ) : null}
 
-            {view === "person" ? (
+            {view === "person" && selectedMetricMatchesView ? (
+              <MetricDetail
+                title="Person Matrix"
+                icon={<UserRound size={17} />}
+                selectedMetric={selectedMetric}
+                busy={busy}
+                onBack={() => setSelectedMetric(null)}
+                onEdit={onEditMetric}
+                onDelete={onDeleteMetric}
+              />
+            ) : null}
+
+            {view === "person" && !selectedMetricMatchesView ? (
               <MetricCard
                 title="Person Matrix"
                 icon={<UserRound size={17} />}
@@ -343,6 +372,7 @@ function StepSheet({
                 onEdit={onEditMetric}
                 onDelete={onDeleteMetric}
                 onAdd={onAddMetric}
+                onOpen={setSelectedMetric}
               />
             ) : null}
           </div>
@@ -362,6 +392,7 @@ function MetricCard({
   onEdit,
   onDelete,
   onAdd,
+  onOpen,
 }: {
   title: string;
   icon: ReactNode;
@@ -372,6 +403,7 @@ function MetricCard({
   onEdit: (attr: Attribute, kind: AttrKind) => void;
   onDelete: (attr: Attribute) => void;
   onAdd: (kind: AttrKind) => void;
+  onOpen: (selectedMetric: Exclude<SelectedMetric, null>) => void;
 }) {
   return (
     <Card className="attribute-card">
@@ -390,7 +422,23 @@ function MetricCard({
       <CardContent className="attribute-list">
         {attrs.length ? (
           attrs.map((attr) => (
-            <div className="attribute-row editable-attribute-row" key={attr.id || attr.name}>
+            <div
+              className="attribute-row editable-attribute-row"
+              key={attr.id || attr.name}
+              role="button"
+              tabIndex={0}
+              onClick={(event) => {
+                const target = event.target as HTMLElement;
+                if (target.closest("button,input")) return;
+                onOpen({ attr, kind });
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onOpen({ attr, kind });
+                }
+              }}
+            >
               <span>
                 <strong>{clean(attr.name)}</strong>
                 <small>
@@ -414,7 +462,6 @@ function MetricCard({
                 aria-label={`Current rating slider for ${clean(attr.name)}`}
                 onValueChange={([nextValue]) => onRating(attr, clamp(nextValue || 0, 0, 10))}
               />
-              <p>{clean(attr.meaning)}</p>
             </div>
           ))
         ) : (
@@ -422,6 +469,84 @@ function MetricCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function MetricDetail({
+  title,
+  icon,
+  selectedMetric,
+  busy,
+  onBack,
+  onEdit,
+  onDelete,
+}: {
+  title: string;
+  icon: ReactNode;
+  selectedMetric: Exclude<SelectedMetric, null>;
+  busy: boolean;
+  onBack: () => void;
+  onEdit: (attr: Attribute, kind: AttrKind) => void;
+  onDelete: (attr: Attribute) => void;
+}) {
+  const { attr, kind } = selectedMetric;
+
+  return (
+    <div className="details-stack">
+      <Button className="back-button" variant="outline" type="button" onClick={onBack}>
+        <ArrowLeft size={16} />
+        Back
+      </Button>
+      <Card className="attribute-card">
+        <CardHeader>
+          <div className="card-heading-row">
+            <div>
+              <CardTitle className="attribute-title">
+                {icon}
+                {clean(attr.name)}
+              </CardTitle>
+              <CardDescription>
+                {title} / {clean(attr.group)} target {ratingPercent(attr.final)}
+              </CardDescription>
+            </div>
+            <span className="row-actions">
+              <ActionButton title="Edit metric" disabled={busy} onClick={() => onEdit(attr, kind)}>
+                <Pencil size={16} />
+              </ActionButton>
+              <ActionButton title="Delete metric" disabled={busy} onClick={() => onDelete(attr)}>
+                <Trash2 size={16} />
+              </ActionButton>
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="details-grid">
+          <Card>
+            <CardHeader>
+              <CardTitle className="detail-card-title">Meaning</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{clean(attr.meaning) || "No meaning added yet."}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="detail-card-title">How to build it</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {attr.build.length ? (
+                <ul className="action-list">
+                  {attr.build.map((item) => (
+                    <li key={item}>{clean(item)}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No build actions added yet.</p>
+              )}
+            </CardContent>
+          </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

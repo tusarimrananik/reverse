@@ -360,13 +360,19 @@ body.sheet-open {
 
 .editable-attribute-row {
   grid-template-columns: minmax(0, 1fr) auto auto;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
-.editable-attribute-row p {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: #64748b;
-  font-size: 0.82rem;
+.editable-attribute-row:hover {
+  background: #ffffff;
+  border-color: #90d4ca;
+  transform: translateY(-1px);
+}
+
+.editable-attribute-row:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
 }
 
 .icon-action {
@@ -1183,13 +1189,6 @@ article.timeline-item {
   display: none;
 }
 
-.editable-attribute-row p {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
 .timeline-item > .row-actions {
   justify-content: flex-end;
   align-self: start;
@@ -1214,10 +1213,6 @@ article.timeline-item {
 
 .editable-attribute-row {
   grid-template-columns: minmax(0, 1fr) auto minmax(72px, auto);
-}
-
-.editable-attribute-row p {
-  line-height: 1.45;
 }
 
 .icon-action {
@@ -1280,12 +1275,6 @@ article.timeline-item {
 
 .step-detail-sheet .attribute-card {
   box-shadow: none;
-}
-
-.step-detail-sheet .editable-attribute-row p {
-  display: block;
-  overflow: visible;
-  -webkit-line-clamp: initial;
 }
 
 @media (max-width: 1180px) {
