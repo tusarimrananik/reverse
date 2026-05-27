@@ -1,7 +1,7 @@
 "use client";
 
-import type { ChangeEvent, FormEvent, ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -17,7 +17,6 @@ import {
   Save,
   Target,
   Trash2,
-  Upload,
   UserRound,
   X,
 } from "lucide-react";
@@ -55,6 +54,10 @@ function averageCurrent(attrs: Attribute[]) {
 
 function ratingPercent(value: number) {
   return `${clamp(value, 0, 10) * 10}%`;
+}
+
+function isEndGoal(step: Step) {
+  return clean(step.label).toLowerCase() === "end goal";
 }
 
 function buildText(items: string[]) {
@@ -176,10 +179,10 @@ function StepCard({
       <span className="timeline-main">
         <span className="timeline-meta">
           <span className={`gap-pill ${currentGapClass(gap)}`}>{status}</span>
+          {isEndGoal(step) ? <span className="end-goal-badge">End goal</span> : null}
           {current ? <span className="end-goal-badge">Current step</span> : null}
         </span>
         <strong>{clean(step.title)}</strong>
-        <small>{clean(step.label)}</small>
       </span>
       <StepStats path={path} step={step} />
     </article>
@@ -194,10 +197,7 @@ function StepSheet({
   busy,
   onClose,
   onSetProgress,
-  onDeleteStep,
-  onSaveStep,
-  onSaveMetric,
-  onDeleteMetric,
+  onRating,
 }: {
   open: boolean;
   step: Step | null;
@@ -206,30 +206,21 @@ function StepSheet({
   busy: boolean;
   onClose: () => void;
   onSetProgress: (step: Step) => void;
-  onDeleteStep: (step: Step) => void;
-  onSaveStep: (step: Step, form: FormData) => void;
-  onSaveMetric: (attr: Attribute, kind: AttrKind, form: FormData) => void;
-  onDeleteMetric: (attr: Attribute) => void;
+  onRating: (attr: Attribute, value: number) => void;
 }) {
   const [view, setView] = useState<"details" | "business" | "person">("details");
   const [selectedMetric, setSelectedMetric] = useState<SelectedMetric>(null);
-  const [editingStep, setEditingStep] = useState(false);
-  const [editingMetric, setEditingMetric] = useState(false);
 
   useEffect(() => {
     if (open) {
       setView("details");
       setSelectedMetric(null);
-      setEditingStep(false);
-      setEditingMetric(false);
     }
   }, [open, step?.id]);
 
   function switchView(nextView: "details" | "business" | "person") {
     setView(nextView);
     setSelectedMetric(null);
-    setEditingStep(false);
-    setEditingMetric(false);
   }
 
   const selectedMetricMatchesView =
@@ -259,36 +250,16 @@ function StepSheet({
               </div>
             </div>
 
-            {view === "details" && editingStep ? (
-              <StepEditForm
-                step={step}
-                busy={busy}
-                onCancel={() => setEditingStep(false)}
-                onSave={(form) => {
-                  setEditingStep(false);
-                  onSaveStep(step, form);
-                }}
-              />
-            ) : null}
-
-            {view === "details" && !editingStep ? (
+            {view === "details" ? (
               <div className="details-stack">
                 <Card>
                   <CardHeader>
                     <div className="card-heading-row">
-                      <CardTitle>{clean(step.label)}</CardTitle>
+                      <CardTitle>{isEndGoal(step) ? "End goal" : "Step details"}</CardTitle>
                       <span className="row-actions">
                         <Button variant="outline" type="button" disabled={busy} onClick={() => onSetProgress(step)}>
                           <CheckCircle2 size={16} />
                           Current
-                        </Button>
-                        <Button variant="outline" type="button" disabled={busy} onClick={() => setEditingStep(true)}>
-                          <Pencil size={16} />
-                          Edit
-                        </Button>
-                        <Button variant="outline" type="button" disabled={busy} onClick={() => onDeleteStep(step)}>
-                          <Trash2 size={16} />
-                          Delete
                         </Button>
                       </span>
                     </div>
@@ -328,19 +299,11 @@ function StepSheet({
                 title="Business Matrix"
                 icon={<BriefcaseBusiness size={17} />}
                 selectedMetric={selectedMetric}
-                editing={editingMetric}
                 busy={busy}
                 onBack={() => {
                   setSelectedMetric(null);
-                  setEditingMetric(false);
                 }}
-                onEdit={() => setEditingMetric(true)}
-                onCancelEdit={() => setEditingMetric(false)}
-                onSave={(attr, kind, form) => {
-                  setEditingMetric(false);
-                  onSaveMetric(attr, kind, form);
-                }}
-                onDelete={onDeleteMetric}
+                onRating={onRating}
               />
             ) : null}
 
@@ -350,9 +313,9 @@ function StepSheet({
                 icon={<BriefcaseBusiness size={17} />}
                 attrs={path.vehicleAttrs}
                 kind="vehicle"
+                onRating={onRating}
                 onOpen={(metric) => {
                   setSelectedMetric(metric);
-                  setEditingMetric(false);
                 }}
               />
             ) : null}
@@ -362,19 +325,11 @@ function StepSheet({
                 title="Person Matrix"
                 icon={<UserRound size={17} />}
                 selectedMetric={selectedMetric}
-                editing={editingMetric}
                 busy={busy}
                 onBack={() => {
                   setSelectedMetric(null);
-                  setEditingMetric(false);
                 }}
-                onEdit={() => setEditingMetric(true)}
-                onCancelEdit={() => setEditingMetric(false)}
-                onSave={(attr, kind, form) => {
-                  setEditingMetric(false);
-                  onSaveMetric(attr, kind, form);
-                }}
-                onDelete={onDeleteMetric}
+                onRating={onRating}
               />
             ) : null}
 
@@ -384,9 +339,9 @@ function StepSheet({
                 icon={<UserRound size={17} />}
                 attrs={path.driverAttrs}
                 kind="driver"
+                onRating={onRating}
                 onOpen={(metric) => {
                   setSelectedMetric(metric);
-                  setEditingMetric(false);
                 }}
               />
             ) : null}
@@ -402,12 +357,14 @@ function MetricCard({
   icon,
   attrs,
   kind,
+  onRating,
   onOpen,
 }: {
   title: string;
   icon: ReactNode;
   attrs: Attribute[];
   kind: AttrKind;
+  onRating: (attr: Attribute, value: number) => void;
   onOpen: (selectedMetric: Exclude<SelectedMetric, null>) => void;
 }) {
   return (
@@ -458,8 +415,8 @@ function MetricCard({
                   max="10"
                   step="1"
                   value={[currentValue(attr)]}
-                  disabled
-                  aria-label={`Current rating preview for ${clean(attr.name)}`}
+                  aria-label={`Current rating slider for ${clean(attr.name)}`}
+                  onValueChange={([nextValue]) => onRating(attr, clamp(nextValue || 0, 0, 10))}
                 />
               </span>
               <span className="metric-slider-row">
@@ -487,30 +444,18 @@ function MetricDetail({
   title,
   icon,
   selectedMetric,
-  editing,
   busy,
   onBack,
-  onEdit,
-  onCancelEdit,
-  onSave,
-  onDelete,
+  onRating,
 }: {
   title: string;
   icon: ReactNode;
   selectedMetric: Exclude<SelectedMetric, null>;
-  editing: boolean;
   busy: boolean;
   onBack: () => void;
-  onEdit: () => void;
-  onCancelEdit: () => void;
-  onSave: (attr: Attribute, kind: AttrKind, form: FormData) => void;
-  onDelete: (attr: Attribute) => void;
+  onRating: (attr: Attribute, value: number) => void;
 }) {
-  const { attr, kind } = selectedMetric;
-
-  if (editing) {
-    return <MetricEditForm title={title} icon={icon} attr={attr} kind={kind} busy={busy} onCancel={onCancelEdit} onSave={onSave} />;
-  }
+  const { attr } = selectedMetric;
 
   return (
     <div className="details-stack">
@@ -530,14 +475,6 @@ function MetricDetail({
                 {title} current {ratingPercent(currentValue(attr))} / target {ratingPercent(attr.final)}
               </CardDescription>
             </div>
-            <span className="row-actions">
-              <ActionButton title="Edit metric" disabled={busy} onClick={onEdit}>
-                <Pencil size={16} />
-              </ActionButton>
-              <ActionButton title="Delete metric" disabled={busy} onClick={() => onDelete(attr)}>
-                <Trash2 size={16} />
-              </ActionButton>
-            </span>
           </div>
         </CardHeader>
         <CardContent className="details-stack">
@@ -549,8 +486,9 @@ function MetricDetail({
                 max="10"
                 step="1"
                 value={[currentValue(attr)]}
-                disabled
-                aria-label={`Current rating preview for ${clean(attr.name)}`}
+                disabled={busy}
+                aria-label={`Current rating slider for ${clean(attr.name)}`}
+                onValueChange={([nextValue]) => onRating(attr, clamp(nextValue || 0, 0, 10))}
               />
             </span>
             <span className="metric-slider-row">
@@ -876,9 +814,7 @@ export default function ReverseGoalMap() {
   const [pathId, setPathId] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [editTarget, setEditTarget] = useState<EditTarget>(null);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
-  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const goal = useMemo(() => goals.find((item) => item.id === goalId) || goals[0], [goalId, goals]);
   const path = useMemo(() => goal?.paths.find((item) => item.id === pathId) || goal?.paths[0], [goal, pathId]);
@@ -912,7 +848,6 @@ export default function ReverseGoalMap() {
     const data = (await response.json()) as { goals?: Goal[]; error?: string };
     if (!response.ok) throw new Error(data.error || "Database update failed");
     setGoals(data.goals || []);
-    setEditTarget(null);
     setBusy(false);
   }
 
@@ -922,19 +857,6 @@ export default function ReverseGoalMap() {
     } catch (error) {
       setBusy(false);
       alert(error instanceof Error ? error.message : "Something went wrong");
-    }
-  }
-
-  async function importJsonFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-
-    try {
-      const parsed = JSON.parse(await file.text()) as Goal | Goal[];
-      await safeMutate({ action: "importGoals", goals: parsed });
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Could not import that JSON file");
     }
   }
 
@@ -984,10 +906,6 @@ export default function ReverseGoalMap() {
     return (
       <main className="app-shell">
         <EmptyState title="No database content yet" description="Create a goal to start building your editable dashboard." />
-        <Button type="button" onClick={() => safeMutate({ action: "createGoal", title: "New Goal" })}>
-          <Plus size={16} />
-          Add goal
-        </Button>
       </main>
     );
   }
@@ -996,10 +914,6 @@ export default function ReverseGoalMap() {
     return (
       <main className="app-shell">
         <EmptyState title={clean(goal.title)} description="This goal has no roadmap yet. Add one to manage steps and matrices." />
-        <Button type="button" onClick={() => safeMutate({ action: "createPath", goalId: goal.id, name: "Default Roadmap" })}>
-          <Plus size={16} />
-          Add roadmap
-        </Button>
       </main>
     );
   }
@@ -1017,7 +931,6 @@ export default function ReverseGoalMap() {
               setGoalId(event.target.value);
               setPathId(nextGoal?.paths[0]?.id || "");
               setSelectedStepId(null);
-              setEditTarget(null);
             }}
           >
             {goals.map((item) => (
@@ -1044,21 +957,6 @@ export default function ReverseGoalMap() {
             ))}
           </Select>
         </label>
-        <div className="control-actions">
-          <input ref={importInputRef} className="visually-hidden" type="file" accept="application/json,.json" onChange={importJsonFile} />
-          <Button variant="outline" type="button" disabled={busy} onClick={() => importInputRef.current?.click()}>
-            <Upload size={16} />
-            Import JSON
-          </Button>
-          <Button variant="outline" type="button" disabled={busy} onClick={() => safeMutate({ action: "createGoal", title: "New Goal" })}>
-            <Plus size={16} />
-            Goal
-          </Button>
-          <Button variant="outline" type="button" disabled={busy} onClick={() => safeMutate({ action: "createPath", goalId: goal.id, name: "New Roadmap" })}>
-            <Plus size={16} />
-            Roadmap
-          </Button>
-        </div>
       </section>
 
       <section className="dashboard-summary">
@@ -1072,47 +970,6 @@ export default function ReverseGoalMap() {
                 </CardTitle>
                 <CardDescription>{clean(path.name)}</CardDescription>
               </div>
-              <span className="row-actions">
-                <ActionButton title="Edit goal" disabled={busy} onClick={() => setEditTarget({ type: "goal", item: goal })}>
-                  <Pencil size={16} />
-                </ActionButton>
-                <ActionButton title="Edit roadmap" disabled={busy} onClick={() => setEditTarget({ type: "path", item: path })}>
-                  <Pencil size={16} />
-                </ActionButton>
-                <ActionButton title="Delete roadmap" disabled={busy} onClick={() => safeMutate({ action: "deletePath", id: path.id })}>
-                  <Trash2 size={16} />
-                </ActionButton>
-                <Button
-                  variant="outline"
-                  type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    setEditTarget({
-                      type: "metric",
-                      kind: "vehicle",
-                      item: { name: "New business matrix", final: 10, group: "default", meaning: "", build: [] },
-                    })
-                  }
-                >
-                  <Plus size={16} />
-                  Business matrix
-                </Button>
-                <Button
-                  variant="outline"
-                  type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    setEditTarget({
-                      type: "metric",
-                      kind: "driver",
-                      item: { name: "New person matrix", final: 10, group: "default", meaning: "", build: [] },
-                    })
-                  }
-                >
-                  <Plus size={16} />
-                  Person matrix
-                </Button>
-              </span>
             </div>
           </CardHeader>
           <CardContent className="summary-grid">
@@ -1138,34 +995,13 @@ export default function ReverseGoalMap() {
         </Card>
       </section>
 
-      <EditorPanel target={editTarget} goal={goal} path={path} onClose={() => setEditTarget(null)} onSubmit={submitEditor} />
-
       <section className="workspace-grid workspace-grid-single">
         <section className="timeline-panel">
           <div className="section-heading">
             <div>
               <h2>Roadmap steps</h2>
-              <p>Add, edit, delete, and mark your current position.</p>
+              <p>Open a step to mark your current position.</p>
             </div>
-            <Button
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                setEditTarget({
-                  type: "step",
-                  item: {
-                    label: "New Step",
-                    title: "New roadmap step",
-                    meaning: "",
-                    build: [],
-                    factors: { default: 0.5 },
-                  },
-                })
-              }
-            >
-              <Plus size={16} />
-              Add step
-            </Button>
           </div>
           <div className="timeline-list">
             {goal.steps.length ? (
@@ -1194,36 +1030,7 @@ export default function ReverseGoalMap() {
         busy={busy}
         onClose={() => setSelectedStepId(null)}
         onSetProgress={(step) => safeMutate({ action: "setProgress", pathId: path.id, stepId: step.id })}
-        onDeleteStep={(step) => safeMutate({ action: "deleteStep", id: step.id })}
-        onSaveStep={(step, form) =>
-          safeMutate({
-            action: "updateStep",
-            id: step.id,
-            goalId: goal.id,
-            label: form.get("label"),
-            title: form.get("title"),
-            meaning: form.get("meaning"),
-            build: linesFromForm(form, "build"),
-            factors: parseFactors(form.get("factors")),
-          })
-        }
-        onSaveMetric={(attr, kind, form) =>
-          void (async () => {
-            await safeMutate({
-              action: "updateMetric",
-              id: attr.id,
-              pathId: path.id,
-              kind,
-              name: form.get("name"),
-              final: form.get("final"),
-              group: "default",
-              meaning: form.get("meaning"),
-              build: linesFromForm(form, "build"),
-            });
-            await safeMutate({ action: "updateMetricRating", id: attr.id, current: form.get("current") });
-          })()
-        }
-        onDeleteMetric={(attr) => safeMutate({ action: "deleteMetric", id: attr.id })}
+        onRating={(attr, value) => safeMutate({ action: "updateMetricRating", id: attr.id, current: value })}
       />
     </main>
   );

@@ -59,6 +59,11 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = await request.json();
   const action = String(body.action || "");
+  const trackingActions = new Set(["setProgress", "updateMetricRating"]);
+
+  if (!trackingActions.has(action)) {
+    return NextResponse.json({ error: "This dashboard is locked. Only current step and current ratings can be changed." }, { status: 403 });
+  }
 
   try {
     switch (action) {
