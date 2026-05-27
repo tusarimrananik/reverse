@@ -9,6 +9,7 @@ import {
   deletePath,
   deleteStep,
   getDashboardData,
+  importGoals,
   setProgress,
   updateGoal,
   updateMetric,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/database";
 import { clamp } from "@/lib/ratings";
 import type { Attribute, Step } from "@/lib/types";
+import type { Goal } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +69,9 @@ export async function POST(request: Request) {
       break;
     case "deleteGoal":
       await deleteGoal(String(body.id));
+      break;
+    case "importGoals":
+      await importGoals(body.goals as Goal | Goal[]);
       break;
     case "createPath":
       await createPath(String(body.goalId), String(body.name || "New roadmap"));

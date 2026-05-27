@@ -31,6 +31,21 @@ function maxPosition(items: { position: number }[]) {
   return items.reduce((max, item) => Math.max(max, item.position), -1) + 1;
 }
 
+function clampRating(value: unknown, fallback = 0) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(0, Math.min(10, Math.round(number)));
+}
+
+function slug(value: unknown, fallback: string) {
+  const text = String(value || fallback)
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 48);
+  return text || fallback;
+}
+
 async function ensureSeeded() {
   const existing = await prisma.goal.count();
   if (existing > 0) return;
@@ -178,6 +193,98 @@ export async function updateGoal(id: string, title: string) {
 
 export async function deleteGoal(id: string) {
   await prisma.goal.delete({ where: { id } });
+}
+
+export async function importGoals(input: Goal | Goal[]) {
+  const incoming = Array.isArray(input) ? input : [input];
+  if (!incoming.length) return;
+
+  const existingGoalPositions = await prisma.goal.findMany({ select: { position: true } });
+  let nextGoalPosition = maxPosition(existingGoalPositions);
+  const existingGoalIds = new Set((await prisma.goal.findMany({ select: { id: true } })).map((item) => item.id));
+
+  await prisma.$transaction(async (tx) => {
+    for (const importedGoal of incoming) {
+      const baseGoalId = slug(importedGoal.id, "imported_goal");
+      const goalId = existingGoalIds.has(baseGoalId) ? uid("goal") : baseGoalId;
+      existingGoalIds.add(goalId);
+
+      const steps = Array.isArray(importedGoal.steps) ? importedGoal.steps : [];
+      const paths = Array.isArray(importedGoal.paths) ? importedGoal.paths : [];
+      const stepIdMap = new Map<string, string>();
+
+      await tx.goal.create({
+        data: {
+          id: goalId,
+          title: String(importedGoal.title || "Imported Goal"),
+          position: nextGoalPosition++,
+          steps: {
+            create: steps.map((step, stepIndex) => {
+              const stepId = `${goalId}_step_${stepIndex}`;
+              if (step.id) stepIdMap.set(step.id, stepId);
+              return {
+                id: stepId,
+                label: String(step.label || `Step ${stepIndex + 1}`),
+                title: String(step.title || "Imported roadmap step"),
+                meaning: String(step.meaning || ""),
+                build: JSON.stringify(Array.isArray(step.build) ? step.build.map(String) : []),
+                factors: JSON.stringify(step.factors && typeof step.factors === "object" ? step.factors : { default: 0 }),
+                position: stepIndex,
+              };
+            }),
+          },
+        },
+      });
+
+      for (const [pathIndex, item] of paths.entries()) {
+        const pathId = `${goalId}_path_${pathIndex}`;
+        const vehicleAttrs = Array.isArray(item.vehicleAttrs) ? item.vehicleAttrs : [];
+        const driverAttrs = Array.isArray(item.driverAttrs) ? item.driverAttrs : [];
+        const currentStepId = item.currentStepId ? stepIdMap.get(item.currentStepId) || null : null;
+
+        await tx.goalPath.create({
+          data: {
+            id: pathId,
+            goalId,
+            name: String(item.name || `Roadmap ${pathIndex + 1}`),
+            currentStepId,
+            position: pathIndex,
+            metrics: {
+              create: [
+                ...vehicleAttrs.map((attr, index) => importMetric(pathId, "vehicle", attr, index)),
+                ...driverAttrs.map((attr, index) => importMetric(pathId, "driver", attr, index)),
+              ],
+            },
+          },
+        });
+      }
+
+      if (!paths.length) {
+        await tx.goalPath.create({
+          data: {
+            id: `${goalId}_path_0`,
+            goalId,
+            name: "Imported Roadmap",
+            position: 0,
+          },
+        });
+      }
+    }
+  });
+}
+
+function importMetric(pathId: string, kind: AttrKind, attr: Attribute, index: number) {
+  return {
+    id: `${pathId}_${kind}_${index}`,
+    kind,
+    name: String(attr.name || "Imported metric"),
+    final: clampRating(attr.final, 10),
+    groupName: "default",
+    meaning: String(attr.meaning || ""),
+    build: JSON.stringify(Array.isArray(attr.build) ? attr.build.map(String) : []),
+    current: clampRating(attr.current, 0),
+    position: index,
+  };
 }
 
 export async function createPath(goalId: string, name: string) {

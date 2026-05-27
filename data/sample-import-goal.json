@@ -1,0 +1,93 @@
+{
+  "id": "sample_content_business",
+  "title": "Sample Content Business Goal",
+  "steps": [
+    {
+      "id": "sample_step_end",
+      "label": "End Goal",
+      "title": "Own a profitable content business with repeatable revenue and flexible work.",
+      "meaning": "The business has dependable demand, clear monetization, and can run with a simple weekly operating rhythm.",
+      "build": [
+        "Track revenue, audience growth, retention, and weekly publishing consistency.",
+        "Document the repeatable content and sales system.",
+        "Keep reducing the work that depends only on personal motivation."
+      ],
+      "factors": {
+        "default": 1
+      }
+    },
+    {
+      "id": "sample_step_first_revenue",
+      "label": "Previous Step 1",
+      "title": "First repeatable revenue stream is working.",
+      "meaning": "A small but real offer, sponsorship, product, or service is producing repeatable income.",
+      "build": [
+        "Choose one offer and sell it to a narrow audience.",
+        "Publish weekly content tied to the same customer problem.",
+        "Review what creates leads and double down for four weeks."
+      ],
+      "factors": {
+        "default": 0.55
+      }
+    }
+  ],
+  "paths": [
+    {
+      "id": "sample_main_roadmap",
+      "name": "Main Roadmap",
+      "currentStepId": "sample_step_first_revenue",
+      "vehicleAttrs": [
+        {
+          "id": "sample_business_offer",
+          "name": "Offer clarity",
+          "final": 9,
+          "current": 4,
+          "group": "default",
+          "meaning": "The business has a clear offer for a specific buyer and problem.",
+          "build": [
+            "Write the offer in one sentence.",
+            "Test it with five real prospects."
+          ]
+        },
+        {
+          "id": "sample_business_distribution",
+          "name": "Distribution system",
+          "final": 8,
+          "current": 3,
+          "group": "default",
+          "meaning": "There is a repeatable way to reach the right audience.",
+          "build": [
+            "Pick one primary channel.",
+            "Publish or outreach on a fixed weekly cadence."
+          ]
+        }
+      ],
+      "driverAttrs": [
+        {
+          "id": "sample_person_consistency",
+          "name": "Execution consistency",
+          "final": 9,
+          "current": 5,
+          "group": "default",
+          "meaning": "You can keep the core weekly actions moving even when motivation changes.",
+          "build": [
+            "Use a weekly review.",
+            "Protect two focused work blocks per week."
+          ]
+        },
+        {
+          "id": "sample_person_sales",
+          "name": "Sales confidence",
+          "final": 8,
+          "current": 2,
+          "group": "default",
+          "meaning": "You can discuss the offer, handle objections, and ask for the sale.",
+          "build": [
+            "Do three practice calls.",
+            "Write down common objections and responses."
+          ]
+        }
+      ]
+    }
+  ]
+}

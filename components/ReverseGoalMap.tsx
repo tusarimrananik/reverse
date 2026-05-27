@@ -1,7 +1,7 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -17,6 +17,7 @@ import {
   Save,
   Target,
   Trash2,
+  Upload,
   UserRound,
   X,
 } from "lucide-react";
@@ -878,6 +879,7 @@ export default function ReverseGoalMap() {
   const [busy, setBusy] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget>(null);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const goal = useMemo(() => goals.find((item) => item.id === goalId) || goals[0], [goalId, goals]);
   const path = useMemo(() => goal?.paths.find((item) => item.id === pathId) || goal?.paths[0], [goal, pathId]);
@@ -921,6 +923,19 @@ export default function ReverseGoalMap() {
     } catch (error) {
       setBusy(false);
       alert(error instanceof Error ? error.message : "Something went wrong");
+    }
+  }
+
+  async function importJsonFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      const parsed = JSON.parse(await file.text()) as Goal | Goal[];
+      await safeMutate({ action: "importGoals", goals: parsed });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Could not import that JSON file");
     }
   }
 
@@ -1031,6 +1046,11 @@ export default function ReverseGoalMap() {
           </Select>
         </label>
         <div className="control-actions">
+          <input ref={importInputRef} className="visually-hidden" type="file" accept="application/json,.json" onChange={importJsonFile} />
+          <Button variant="outline" type="button" disabled={busy} onClick={() => importInputRef.current?.click()}>
+            <Upload size={16} />
+            Import JSON
+          </Button>
           <Button variant="outline" type="button" disabled={busy} onClick={() => safeMutate({ action: "createGoal", title: "New Goal" })}>
             <Plus size={16} />
             Goal
